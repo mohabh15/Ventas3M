@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "800683276400",
+    "project_id": "ventas-3m",
+    "storage_bucket": "ventas-3m.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:800683276400:android:3004e189eb26d413a55cb5",
+        "android_client_info": {
+          "package_name": "com.example.app_ventas_3m"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCo_vxo-pz9LrCTRZsCNUt5tu8ybZ8cqrw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:800683276400:android:86bdd41870d82d1ca55cb5",
+        "android_client_info": {
+          "package_name": "com.example.ventas3m"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCo_vxo-pz9LrCTRZsCNUt5tu8ybZ8cqrw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

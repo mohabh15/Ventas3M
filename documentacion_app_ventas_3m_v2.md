@@ -1336,7 +1336,7 @@ lib/
 
 #### Semana 1: Configuración del Entorno
 - [ ] Configurar nuevo proyecto Flutter 3.16+ desde cero
-- [ ] Configuración inicial de Firebase (nuevo proyecto)
+- [ ] Configuración inicial de Firebase (proyecto ventas_3m)
 - [ ] Setup de estructura de carpetas modular
 - [ ] Configuración de dependencias base (pubspec.yaml)
 - [ ] Configuración de assets (fuentes, iconos, imágenes)
