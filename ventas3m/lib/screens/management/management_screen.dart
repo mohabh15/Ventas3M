@@ -5,50 +5,79 @@ class ManagementScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Gestión Empresarial',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Gestión'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Agregar nuevo elemento')),
+              );
+            },
+            tooltip: 'Agregar',
           ),
-          const SizedBox(height: 20),
-          Expanded(
-            child: GridView.count(
-              crossAxisCount: 2,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-              children: [
-                _buildManagementCard(
-                  context,
-                  'Financiera',
-                  Icons.account_balance,
-                  Colors.orange,
-                  () {
-                    // Navegar a gestión financiera
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Gestión Financiera - Próximamente')),
-                    );
-                  },
-                ),
-                _buildManagementCard(
-                  context,
-                  'Reportes',
-                  Icons.bar_chart,
-                  Colors.purple,
-                  () {
-                    // Navegar a reportes
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Reportes - Próximamente')),
-                    );
-                  },
-                ),
-              ],
-            ),
+          IconButton(
+            icon: const Icon(Icons.filter_list),
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Filtrar elementos')),
+              );
+            },
+            tooltip: 'Filtrar',
+          ),
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Actualizando datos...')),
+              );
+            },
+            tooltip: 'Actualizar',
           ),
         ],
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: GridView.count(
+                crossAxisCount: 2,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+                children: [
+                  _buildManagementCard(
+                    context,
+                    'Financiera',
+                    Icons.account_balance,
+                    Colors.orange,
+                    () {
+                      // Navegar a gestión financiera
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Gestión Financiera - Próximamente')),
+                      );
+                    },
+                  ),
+                  _buildManagementCard(
+                    context,
+                    'Reportes',
+                    Icons.bar_chart,
+                    Colors.purple,
+                    () {
+                      // Navegar a reportes
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Reportes - Próximamente')),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
