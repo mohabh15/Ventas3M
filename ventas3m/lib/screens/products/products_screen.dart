@@ -10,13 +10,8 @@ class ProductsScreen extends StatefulWidget {
 class _ProductsScreenState extends State<ProductsScreen> {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Productos'),
-      ),
-      body: const Center(
-        child: Text('Pantalla de Productos'),
-      ),
+    return const Center(
+      child: Text('Pantalla de Productos'),
     );
   }
 }

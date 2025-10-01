@@ -21,8 +21,8 @@ abstract class AppColors {
 
   // Colores para texto
   static const Color textPrimary = Color(0xFF212121);    // Texto principal
-  static const Color textSecondary = Color(0xFF757575);  // Texto secundario
-  static const Color textDisabled = Color(0xFFBDBDBD);   // Texto deshabilitado
+  static const Color textSecondary = Color(0xFF424242);  // Texto secundario
+  static const Color textDisabled = Color(0xFF666666);   // Texto deshabilitado
   static const Color textOnPrimary = Colors.white;       // Texto sobre primario
 
   // Estados de componentes
@@ -41,11 +41,11 @@ abstract class AppColors {
 // Colores para modo oscuro
 abstract class AppDarkColors {
   // Colores empresariales principales (modo oscuro)
-  static const Color primary = Color(0xFF2196F3);        // Azul más claro para oscuro
-  static const Color secondary = Color(0xFF66BB6A);      // Verde más claro para oscuro
-  static const Color tertiary = Color(0xFFFFB74D);       // Naranja más claro para oscuro
-  static const Color error = Color(0xFFEF5350);          // Rojo más claro para oscuro
-  static const Color surface = Color(0xFF121212);        // Superficie oscura
+   static const Color primary = Color(0xFF2196F3);        // Azul más claro para oscuro
+   static const Color secondary = Color(0xFF66BB6A);      // Verde más claro para oscuro
+   static const Color tertiary = Color(0xFFFFB74D);       // Naranja más claro para oscuro
+   static const Color error = Color(0xFFEF5350);          // Rojo más claro para oscuro
+   static const Color surface = Color(0xFF1A1A1A);        // Superficie oscura
 
   // Colores adicionales para ventas (modo oscuro)
   static const Color sales = Color(0xFF42A5F5);          // Azul ventas oscuro
@@ -59,8 +59,8 @@ abstract class AppDarkColors {
 
   // Colores para texto (modo oscuro)
   static const Color textPrimary = Color(0xFFFFFFFF);    // Texto principal blanco
-  static const Color textSecondary = Color(0xFFB3B3B3);  // Texto secundario gris claro
-  static const Color textDisabled = Color(0xFF666666);   // Texto deshabilitado gris
+  static const Color textSecondary = Color(0xFFE0E0E0);  // Texto secundario gris claro (mejor contraste)
+  static const Color textDisabled = Color(0xFF777777);   // Texto deshabilitado gris (mejor contraste)
   static const Color textOnPrimary = Color(0xFF000000);  // Texto sobre primario negro
 
   // Estados de componentes (modo oscuro)
@@ -74,6 +74,13 @@ abstract class AppDarkColors {
 
   // Sombras (modo oscuro)
   static const Color shadow = Color(0x33000000);         // Sombra negra 20%
+
+  // Colores específicos para avatares en tema oscuro
+  static const Color avatarProfile = Color(0xFFBA68C8);   // Púrpura más claro
+  static const Color avatarProjects = Color(0xFF81C784);  // Verde más claro
+  static const Color avatarSettings = Color(0xFFFFB74D);  // Naranja más claro
+  static const Color avatarTheme = Color(0xFF7986CB);     // Índigo más claro
+  static const Color avatarLogout = Color(0xFFE57373);    // Rojo más claro
 }
 
 // Mapas de colores para acceso programático

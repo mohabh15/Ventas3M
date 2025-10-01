@@ -248,7 +248,7 @@ class AppTheme {
       }),
       trackColor: WidgetStateProperty.resolveWith<Color>((states) {
         if (states.contains(WidgetState.selected)) {
-          return const Color(0x80000000);
+          return AppColors.surfaceVariant.withOpacity(0.5);
         }
         return AppColors.border;
       }),
@@ -425,7 +425,7 @@ class AppTheme {
     // Campos de texto oscuros
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: AppDarkColors.surfaceVariant,
+      fillColor: AppDarkColors.surface,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
@@ -449,12 +449,12 @@ class AppTheme {
       ),
       labelStyle: const TextStyle(
         fontFamily: 'Lufga',
-        color: AppDarkColors.textSecondary,
+        color: AppDarkColors.textPrimary,
         fontSize: 16,
       ),
       hintStyle: const TextStyle(
         fontFamily: 'Lufga',
-        color: AppDarkColors.textDisabled,
+        color: AppDarkColors.textSecondary,
         fontSize: 14,
       ),
       errorStyle: const TextStyle(
@@ -533,7 +533,7 @@ class AppTheme {
       }),
       trackColor: WidgetStateProperty.resolveWith<Color>((states) {
         if (states.contains(WidgetState.selected)) {
-          return const Color(0x80000000);
+          return const Color(0xFFE0E0E0);
         }
         return AppDarkColors.border;
       }),

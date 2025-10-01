@@ -10,13 +10,8 @@ class SalesScreen extends StatefulWidget {
 class _SalesScreenState extends State<SalesScreen> {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Ventas'),
-      ),
-      body: const Center(
-        child: Text('Pantalla de Ventas'),
-      ),
+    return const Center(
+      child: Text('Pantalla de Ventas'),
     );
   }
 }

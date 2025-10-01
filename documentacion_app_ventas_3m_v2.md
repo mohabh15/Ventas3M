@@ -1361,7 +1361,7 @@ lib/
 - [X] Configurar diseño responsivo
 
 #### Semana 5-6: Navegación y Layout
-- [ ] Implementar Bottom Navigation Bar
+- [X] Implementar Bottom Navigation Bar
 - [ ] Crear Drawer Navigation para opciones adicionales
 - [ ] Desarrollar sistema de rutas nombradas
 - [ ] Implementar transiciones de navegación suaves

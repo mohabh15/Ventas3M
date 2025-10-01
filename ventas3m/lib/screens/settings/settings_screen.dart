@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/theme_provider.dart';
+import '../../providers/auth_provider.dart';
+import '../../router/app_router.dart';
 import '../profile/profile_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -15,27 +17,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Configuración'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.save),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Configuración guardada')),
-              );
-            },
-            tooltip: 'Guardar configuración',
-          ),
-          IconButton(
-            icon: const Icon(Icons.more_vert),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Menú de opciones')),
-              );
-            },
-            tooltip: 'Más opciones',
-          ),
-        ],
+        title: const Text('Configuraciones'),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16.0),
@@ -44,11 +26,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
             context,
             'Perfil',
             Icons.person,
-            Colors.purple,
+            Theme.of(context).colorScheme.primary,
             () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                MaterialPageRoute(builder: (context) => ProfileScreen()),
               );
             },
           ),
@@ -56,7 +38,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             context,
             'Gestión de Proyectos',
             Icons.folder,
-            Colors.green,
+            Theme.of(context).colorScheme.secondary,
             () {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Gestión de Proyectos - Próximamente')),
@@ -67,7 +49,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             context,
             'Configuración de la App',
             Icons.app_settings_alt,
-            Colors.orange,
+            Theme.of(context).colorScheme.tertiary,
             () {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Configuración de la App - Próximamente')),
@@ -76,6 +58,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           const SizedBox(height: 16),
           _buildThemeToggleCard(context),
+          const SizedBox(height: 16),
+          _buildLogoutCard(context),
         ],
       ),
     );
@@ -122,7 +106,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: isDark ? Colors.indigo : Colors.amber,
+          backgroundColor: isDark ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.secondary,
           child: Icon(
             isDark ? Icons.dark_mode : Icons.light_mode,
             color: Colors.white,
@@ -139,7 +123,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           'Cambiar entre tema ${isDark ? 'oscuro' : 'claro'}',
           style: TextStyle(
             fontSize: 14,
-            color: Colors.grey[600],
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
         trailing: Switch(
@@ -147,10 +131,41 @@ class _SettingsScreenState extends State<SettingsScreen> {
           onChanged: (value) {
             themeProvider.toggleDarkMode();
           },
-          activeThumbColor: Colors.indigo,
+          activeThumbColor: Theme.of(context).colorScheme.primary,
         ),
         onTap: () {
           themeProvider.toggleDarkMode();
+        },
+      ),
+    );
+  }
+
+  Widget _buildLogoutCard(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: Theme.of(context).colorScheme.error,
+          child: const Icon(Icons.logout, color: Colors.white),
+        ),
+        title: const Text(
+          'Cerrar Sesión',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        trailing: const Icon(Icons.arrow_forward_ios),
+        onTap: () async {
+          await authProvider.logout();
+          if (context.mounted) {
+            Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+          }
         },
       ),
     );

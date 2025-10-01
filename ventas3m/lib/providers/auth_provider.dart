@@ -178,6 +178,31 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  // Método para entrar como invitado
+  Future<void> loginAsGuest() async {
+    _setLoading(true);
+    _clearError();
+
+    try {
+      // Crear usuario invitado
+      final guestUser = User(
+        id: 'guest',
+        name: 'Invitado',
+        email: 'guest@example.com',
+        isEmailVerified: true,
+        createdAt: DateTime.now(),
+        lastLoginAt: DateTime.now(),
+      );
+
+      await _setAuthenticatedUser(guestUser);
+      await _saveSession();
+    } catch (e) {
+      _setError(e.toString());
+    } finally {
+      _setLoading(false);
+    }
+  }
+
   // Limpiar errores
   void clearError() {
     _clearError();
