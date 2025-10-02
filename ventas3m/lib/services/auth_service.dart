@@ -5,6 +5,7 @@ import '../models/user.dart';
 
 class AuthService {
   final firebase_auth.FirebaseAuth _firebaseAuth = firebase_auth.FirebaseAuth.instance;
+  
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // Stream para escuchar cambios de autenticación
@@ -38,36 +39,31 @@ class AuthService {
 
   // Método de login con Google
   Future<User> loginWithGoogle() async {
-    try {
-      final GoogleSignIn googleSignIn = GoogleSignIn();
-      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
-
-      if (googleUser == null) {
-        throw AuthException('Inicio de sesión con Google cancelado');
+    final googleSignIn = GoogleSignIn();
+    final googleUser = await googleSignIn.signIn();
+    if (googleUser != null) {
+      final googleAuth = await googleUser.authentication;
+      if (googleAuth.accessToken != null) {
+          final userCredential = await _firebaseAuth.signInWithCredential(
+            firebase_auth.GoogleAuthProvider.credential(
+              accessToken: googleAuth.accessToken,
+              idToken: googleAuth.idToken,
+            ),  
+          );
+        // Actualizar última fecha de login en Firestore
+        await _updateLastLogin(userCredential.user!.uid);
+        return await _getUserFromFirebase(userCredential.user!);
       }
-
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-      final firebase_auth.AuthCredential credential = firebase_auth.GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-
-      final userCredential = await _firebaseAuth.signInWithCredential(credential);
-
-      if (userCredential.user == null) {
-        throw AuthException('Error al iniciar sesión con Google');
+      else {
+        throw AuthException('Error al obtener token de Google');
       }
-
-      // Actualizar última fecha de login en Firestore
-      await _updateLastLogin(userCredential.user!.uid);
-
-      return await _getUserFromFirebase(userCredential.user!);
-    } on firebase_auth.FirebaseAuthException catch (e) {
-      throw _handleFirebaseAuthException(e);
-    } catch (e) {
-      throw AuthException('Error inesperado durante el login con Google: ${e.toString()}');
+    }
+    else {
+      throw AuthException('Inicio de sesión con Google cancelado');
     }
   }
+
+
 
   // Método de registro
   Future<User> register(String email, String password, String name, {String? phone}) async {
@@ -197,8 +193,7 @@ class AuthService {
         'lastLoginAt': DateTime.now(),
       });
     } catch (e) {
-      // No lanzar error aquí, solo warning silencioso para debugging
-      // Warning: Could not update last login time (removed print for production)
+      throw AuthException('Error al actualizar última fecha de login: ${e.toString()}');
     }
   }
 

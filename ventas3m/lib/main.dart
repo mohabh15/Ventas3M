@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
@@ -15,6 +16,8 @@ Future<void> main() async {
   runApp(
     MultiProvider(
       providers: [
+        //provider firebase
+        StreamProvider.value(value: FirebaseAuth.instance.authStateChanges() , initialData: null),
         // SettingsProvider debe ir primero ya que otros providers pueden depender de él
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
         // ThemeProvider va segundo y se conecta con SettingsProvider

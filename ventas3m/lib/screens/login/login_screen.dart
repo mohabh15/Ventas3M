@@ -24,6 +24,14 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  void _navigateToRegister() {
+    Navigator.of(context).pushNamed('/register');
+  }
+
+  void _navigateToForgotPassword() {
+    Navigator.of(context).pushNamed('/forgot-password');
+  }
+
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -35,14 +43,6 @@ class _LoginScreenState extends State<LoginScreen> {
         SnackBar(content: Text(authProvider.errorMessage ?? 'Error al iniciar sesión')),
       );
     }
-  }
-
-  void _navigateToRegister() {
-    Navigator.of(context).pushNamed('/register');
-  }
-
-  void _navigateToForgotPassword() {
-    Navigator.of(context).pushNamed('/forgot-password');
   }
 
   Future<void> _handleGuestLogin() async {

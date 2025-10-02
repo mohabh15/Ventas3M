@@ -25,7 +25,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             context,
             'Perfil',
             Icons.person,
-            Theme.of(context).colorScheme.primary,
             () {
               Navigator.push(
                 context,
@@ -37,7 +36,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             context,
             'Gestión de Proyectos',
             Icons.folder,
-            Theme.of(context).colorScheme.secondary,
             () {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Gestión de Proyectos - Próximamente')),
@@ -48,7 +46,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             context,
             'Configuración de la App',
             Icons.app_settings_alt,
-            Theme.of(context).colorScheme.tertiary,
             () {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Configuración de la App - Próximamente')),
@@ -68,7 +65,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     BuildContext context,
     String title,
     IconData icon,
-    Color color,
     VoidCallback onTap,
   ) {
     return Card(
@@ -77,9 +73,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
         borderRadius: BorderRadius.circular(12),
       ),
       child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: color,
-          child: Icon(icon, color: Colors.white),
+        leading: Icon(
+          icon,
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+          size: 24,
         ),
         title: Text(
           title,
@@ -104,12 +101,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
         borderRadius: BorderRadius.circular(12),
       ),
       child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: isDark ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.secondary,
-          child: Icon(
-            isDark ? Icons.dark_mode : Icons.light_mode,
-            color: Colors.white,
-          ),
+        leading: Icon(
+          isDark ? Icons.dark_mode : Icons.light_mode,
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+          size: 24,
         ),
         title: Text(
           'Modo ${isDark ? 'Oscuro' : 'Claro'}',
@@ -148,9 +143,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
         borderRadius: BorderRadius.circular(12),
       ),
       child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: Theme.of(context).colorScheme.error,
-          child: const Icon(Icons.logout, color: Colors.white),
+        leading: Icon(
+          Icons.logout,
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+          size: 24,
         ),
         title: const Text(
           'Cerrar Sesión',

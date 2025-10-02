@@ -1347,7 +1347,7 @@ lib/
 - [X] Crear estructura de navegación básica
 - [X] Configurar providers base (Theme, Auth, Settings)
 - [ ] Implementar pantalla de splash screen
-- [ ] Configurar Firebase services básicos
+- [X] Configurar Firebase services básicos
 - [ ] Setup inicial de CI/CD
 
 ### Fase 1: UI Básica y Navegación (4 semanas)
@@ -1362,14 +1362,13 @@ lib/
 
 #### Semana 5-6: Navegación y Layout
 - [X] Implementar Bottom Navigation Bar
-- [ ] Crear Drawer Navigation para opciones adicionales
-- [ ] Desarrollar sistema de rutas nombradas
+- [X] Desarrollar sistema de rutas nombradas
 - [ ] Implementar transiciones de navegación suaves
 - [ ] Crear layout base para todas las pantallas
 - [ ] Configurar deep linking básico
 
 #### Semana 7-8: Pantallas Esenciales
-- [ ] Desarrollar pantalla de Login moderna
+- [X] Desarrollar pantalla de Login moderna
 - [ ] Crear pantalla de Dashboard con layout responsivo
 - [ ] Implementar pantalla de Perfil de usuario
 - [ ] Desarrollar pantalla de Configuración básica
@@ -1379,7 +1378,7 @@ lib/
 ### Fase 2: Autenticación y Gestión de Usuarios (3 semanas)
 
 #### Semana 9-10: Sistema de Autenticación
-- [ ] Implementar Firebase Authentication completo
+- [X] Implementar Firebase Authentication Google
 - [ ] Crear flujo de registro y login seguro
 - [ ] Desarrollar recuperación de contraseñas
 - [ ] Implementar manejo de sesiones y tokens
