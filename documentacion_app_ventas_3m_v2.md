@@ -1396,12 +1396,12 @@ lib/
 ### Fase 3: Gestión de Proyectos (3 semanas)
 
 #### Semana 13-14: Creación de Proyectos
-- [ ] Implementar modelo de datos Project
-- [ ] Crear pantalla de creación de proyectos
-- [ ] Desarrollar configuración inicial de proyecto
-- [ ] Implementar selector de proyecto
+- [X] Implementar modelo de datos Project
+- [X] Crear pantalla de creación de proyectos
+- [X] Desarrollar configuración inicial de proyecto
+- [X] Implementar selector de proyecto
 - [ ] Crear aislamiento básico de datos por proyecto
-- [ ] Desarrollar navegación entre proyectos
+- [X] Desarrollar navegación entre proyectos
 
 #### Semana 15-16: Administración de Proyectos
 - [ ] Implementar gestión de miembros del proyecto

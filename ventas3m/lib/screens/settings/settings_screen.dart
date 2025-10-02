@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/theme_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/settings_provider.dart';
+import '../../services/firebase_service.dart';
+import '../../models/project.dart';
 import '../profile/profile_screen.dart';
+import '../management/management_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -12,12 +16,39 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+  List<Project> _projects = [];
+  bool _isLoadingProjects = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProjects();
+  }
+
+  Future<void> _loadProjects() async {
+    setState(() => _isLoadingProjects = true);
+    try {
+      final firebaseService = FirebaseService();
+      _projects = await firebaseService.getProjects();
+      // ignore: use_build_context_synchronously
+      final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
+      final activeProjectId = settingsProvider.activeProjectId;
+      if (activeProjectId != null && !_projects.any((p) => p.id == activeProjectId)) {
+        settingsProvider.setActiveProjectId(null);
+      }
+    } catch (e) {
+      // Handle error if needed
+    } finally {
+      setState(() => _isLoadingProjects = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Configuraciones'),
-        backgroundColor: Theme.of(context).colorScheme.surface.withOpacity(0.5),
+        backgroundColor: Theme.of(context).colorScheme.surface.withValues(alpha: 0.5),
         elevation: 0,
       ),
       body: ListView(
@@ -45,19 +76,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 16),
           _buildGroupedCard(
             context,
-            'Aplicación',
+            'Proyectos',
             [
               _buildSettingsTile(
                 context,
                 'Gestión de Proyectos',
                 Icons.folder,
                 () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Gestión de Proyectos - Próximamente')),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ManagementScreen()),
                   );
                 },
               ),
               const Divider(),
+              _buildProjectSelectorTile(context),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _buildGroupedCard(
+            context,
+            'Aplicación',
+            [
               _buildSettingsTile(
                 context,
                 'Configuración de la App',
@@ -165,6 +205,77 @@ class _SettingsScreenState extends State<SettingsScreen> {
       onTap: () {
         themeProvider.toggleDarkMode();
       },
+    );
+  }
+
+  Widget _buildProjectSelectorTile(BuildContext context) {
+    final settingsProvider = Provider.of<SettingsProvider>(context);
+    final activeProjectId = settingsProvider.activeProjectId;
+
+    return ListTile(
+      leading: Icon(
+        Icons.business,
+        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+        size: 24,
+      ),
+      title: const Text(
+        'Proyecto Activo',
+        style: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      subtitle: _isLoadingProjects
+          ? const Text('Cargando proyectos...')
+          : _projects.isEmpty
+              ? const Text(
+                  'No hay proyectos disponibles',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey,
+                  ),
+                )
+              : Text(
+                  activeProjectId != null
+                      ? _projects.firstWhere((p) => p.id == activeProjectId, orElse: () => Project(id: '', name: 'Desconocido', description: '', ownerId: '', createdAt: DateTime.now(), updatedAt: DateTime.now(), isActive: false, members: [])).name
+                      : 'Ninguno seleccionado',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+      trailing: _isLoadingProjects
+          ? const SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : _projects.isEmpty
+              ? const Text(
+                  'No disponible',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey,
+                  ),
+                )
+              : DropdownButton<String>(
+                  value: activeProjectId,
+                  hint: const Text('Seleccionar'),
+                  items: [
+                    const DropdownMenuItem<String>(
+                      value: null,
+                      child: Text('Ninguno'),
+                    ),
+                    ..._projects.map((project) => DropdownMenuItem<String>(
+                          value: project.id,
+                          child: Text(project.name),
+                        )),
+                  ],
+                  onChanged: (value) {
+                    settingsProvider.setActiveProjectId(value);
+                  },
+                  underline: const SizedBox(),
+                ),
     );
   }
 

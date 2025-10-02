@@ -9,10 +9,12 @@ class SettingsProvider extends ChangeNotifier {
   // Claves para SharedPreferences
   static const String _themeModeKey = 'theme_mode';
   static const String _languageKey = 'language';
+  static const String _activeProjectIdKey = 'active_project_id';
 
   // Propiedades privadas
   String _themeMode = _defaultThemeMode;
   String _language = _defaultLanguage;
+  String? _activeProjectId;
 
   // Constructor
   SettingsProvider() {
@@ -22,6 +24,7 @@ class SettingsProvider extends ChangeNotifier {
   // Getters públicos
   String get themeMode => _themeMode;
   String get language => _language;
+  String? get activeProjectId => _activeProjectId;
 
   // Métodos para actualizar configuraciones
   void setThemeMode(String themeMode) {
@@ -36,6 +39,14 @@ class SettingsProvider extends ChangeNotifier {
     if (_language != language) {
       _language = language;
       _saveLanguage();
+      notifyListeners();
+    }
+  }
+
+  void setActiveProjectId(String? projectId) {
+    if (_activeProjectId != projectId) {
+      _activeProjectId = projectId;
+      _saveActiveProjectId();
       notifyListeners();
     }
   }
@@ -59,6 +70,19 @@ class SettingsProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> _saveActiveProjectId() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (_activeProjectId != null) {
+        await prefs.setString(_activeProjectIdKey, _activeProjectId!);
+      } else {
+        await prefs.remove(_activeProjectIdKey);
+      }
+    } catch (e) {
+      debugPrint('Error saving active project id: $e');
+    }
+  }
+
   // Método privado para cargar configuraciones
   Future<void> _loadSettings() async {
     try {
@@ -69,6 +93,9 @@ class SettingsProvider extends ChangeNotifier {
 
       // Cargar language con fallback a valor por defecto
       _language = prefs.getString(_languageKey) ?? _defaultLanguage;
+
+      // Cargar active project id
+      _activeProjectId = prefs.getString(_activeProjectIdKey);
 
       notifyListeners();
     } catch (e) {
@@ -83,6 +110,7 @@ class SettingsProvider extends ChangeNotifier {
   Future<void> resetToDefaults() async {
     _themeMode = _defaultThemeMode;
     _language = _defaultLanguage;
+    _activeProjectId = null;
 
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -100,6 +128,7 @@ class SettingsProvider extends ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_themeModeKey);
       await prefs.remove(_languageKey);
+      await prefs.remove(_activeProjectIdKey);
       await resetToDefaults();
     } catch (e) {
       debugPrint('Error clearing settings: $e');
@@ -110,7 +139,7 @@ class SettingsProvider extends ChangeNotifier {
   Future<bool> hasSettings() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      return prefs.containsKey(_themeModeKey) || prefs.containsKey(_languageKey);
+      return prefs.containsKey(_themeModeKey) || prefs.containsKey(_languageKey) || prefs.containsKey(_activeProjectIdKey);
     } catch (e) {
       debugPrint('Error checking settings: $e');
       return false;

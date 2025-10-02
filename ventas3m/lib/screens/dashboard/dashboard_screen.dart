@@ -9,12 +9,24 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  //final FirebaseService _firebaseService = FirebaseService();
+  //List<Project> _projects = [];
+  //bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    //_loadProjects();
+  }
+
+  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Dashboard'),
-        backgroundColor: Theme.of(context).colorScheme.surface.withOpacity(0.5),
+        backgroundColor: Theme.of(context).colorScheme.surface.withValues(alpha: 0.5),
         elevation: 0,
         actions: [
           IconButton(
@@ -28,8 +40,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ],
       ),
-      body: const Center(
-        child: Text('Dashboard Screen'),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Container(),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -87,7 +87,7 @@ class AuthService {
         isEmailVerified: userCredential.user!.emailVerified,
       );
 
-      await _firestore.collection('users').doc(user.id).set(user.toMap());
+      await _firestore.collection('users').doc(user.id).set(user.toJson());
 
       // Enviar email de verificación
       await userCredential.user!.sendEmailVerification();
@@ -149,7 +149,7 @@ class AuthService {
       await userDoc.update(updateData);
 
       final updatedDoc = await userDoc.get();
-      return User.fromMap(updatedDoc.data()!);
+      return User.fromJson(updatedDoc.data()!);
     } catch (e) {
       throw AuthException('Error al actualizar perfil: ${e.toString()}');
     }
@@ -162,7 +162,7 @@ class AuthService {
 
       if (userDoc.exists) {
         final userData = userDoc.data()!;
-        return User.fromMap({
+        return User.fromJson({
           ...userData,
           'id': firebaseUser.uid,
           'isEmailVerified': firebaseUser.emailVerified,
@@ -178,7 +178,7 @@ class AuthService {
           createdAt: DateTime.now(),
         );
 
-        await _firestore.collection('users').doc(firebaseUser.uid).set(basicUser.toMap());
+        await _firestore.collection('users').doc(firebaseUser.uid).set(basicUser.toJson());
         return basicUser;
       }
     } catch (e) {

@@ -21,21 +21,21 @@ class User {
     this.metadata,
   });
 
-  factory User.fromMap(Map<String, dynamic> map) {
+  factory User.fromJson(Map<String, dynamic> json) {
     return User(
-      id: map['id'] ?? '',
-      name: map['name'] ?? '',
-      email: map['email'] ?? '',
-      photoUrl: map['photoUrl'],
-      phone: map['phone'],
-      createdAt: map['createdAt']?.toDate(),
-      lastLoginAt: map['lastLoginAt']?.toDate(),
-      isEmailVerified: map['isEmailVerified'] ?? false,
-      metadata: map['metadata'],
+      id: json['id'] ?? '',
+      name: json['name'] ?? '',
+      email: json['email'] ?? '',
+      photoUrl: json['photoUrl'],
+      phone: json['phone'],
+      createdAt: json['createdAt']?.toDate(),
+      lastLoginAt: json['lastLoginAt']?.toDate(),
+      isEmailVerified: json['isEmailVerified'] ?? false,
+      metadata: json['metadata'],
     );
   }
 
-  Map<String, dynamic> toMap() {
+  Map<String, dynamic> toJson() {
     return {
       'id': id,
       'name': name,

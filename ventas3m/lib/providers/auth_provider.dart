@@ -270,7 +270,7 @@ class AuthProvider extends ChangeNotifier {
 
       if (_currentUser != null) {
         // Guardar datos del usuario
-        await prefs.setString(_userKey, _currentUser!.toMap().toString());
+        await prefs.setString(_userKey, _currentUser!.toJson().toString());
         // Marcar sesión como activa
         await prefs.setBool(_sessionKey, true);
       }
