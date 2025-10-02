@@ -50,6 +50,17 @@ class _LoginScreenState extends State<LoginScreen> {
     await authProvider.loginAsGuest();
   }
 
+  Future<void> _handleGoogleLogin() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final success = await authProvider.loginWithGoogle();
+
+    if (!success && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(authProvider.errorMessage ?? 'Error al iniciar sesión con Google')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -64,7 +75,7 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                SizedBox(height: size.height * 0.1),
+                SizedBox(height: size.height * 0.05),
 
                 // Logo o título
                 Center(
@@ -75,7 +86,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         size: 80,
                         color: theme.colorScheme.primary,
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 12),
                       Text(
                         'Ventas 3M',
                         style: theme.textTheme.headlineMedium?.copyWith(
@@ -83,7 +94,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           color: theme.colorScheme.primary,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 6),
                       Text(
                         'Sistema de Gestión de Ventas',
                         style: theme.textTheme.bodyLarge?.copyWith(
@@ -117,7 +128,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   },
                 ),
 
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
 
                 // Campo de contraseña
                 TextFormField(
@@ -147,7 +158,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   },
                 ),
 
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
 
                 // Enlace "¿Olvidaste tu contraseña?"
                 Align(
@@ -164,7 +175,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
 
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
 
                 // Botón de iniciar sesión
                 Consumer<AuthProvider>(
@@ -180,7 +191,25 @@ class _LoginScreenState extends State<LoginScreen> {
                   },
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 12),
+
+                // Botón de continuar con Google
+                Consumer<AuthProvider>(
+                  builder: (context, authProvider, child) {
+                    if (authProvider.isLoading) {
+                      return const LoadingWidget();
+                    }
+                    return AppButton(
+                      text: 'Continuar con Google',
+                      onPressed: _handleGoogleLogin,
+                      variant: AppButtonVariant.outline,
+                      size: AppButtonSize.large,
+                      leadingIcon: Icon(Icons.g_mobiledata), // Placeholder, usarías un icono de Google
+                    );
+                  },
+                ),
+
+                const SizedBox(height: 20),
 
                 // Separador
                 Row(
@@ -199,7 +228,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ],
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
 
                 // Botón de entrar como invitado
                 Consumer<AuthProvider>(
@@ -216,7 +245,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   },
                 ),
 
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
 
                 // Botón de registro
                 AppButton(
@@ -226,7 +255,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   size: AppButtonSize.large,
                 ),
 
-                SizedBox(height: size.height * 0.05),
+                SizedBox(height: size.height * 0.03),
               ],
             ),
           ),

@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import '../models/user.dart';
 
 class AuthService {
@@ -32,6 +33,39 @@ class AuthService {
       throw _handleFirebaseAuthException(e);
     } catch (e) {
       throw AuthException('Error inesperado durante el login: ${e.toString()}');
+    }
+  }
+
+  // Método de login con Google
+  Future<User> loginWithGoogle() async {
+    try {
+      final GoogleSignIn googleSignIn = GoogleSignIn();
+      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+
+      if (googleUser == null) {
+        throw AuthException('Inicio de sesión con Google cancelado');
+      }
+
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final firebase_auth.AuthCredential credential = firebase_auth.GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      final userCredential = await _firebaseAuth.signInWithCredential(credential);
+
+      if (userCredential.user == null) {
+        throw AuthException('Error al iniciar sesión con Google');
+      }
+
+      // Actualizar última fecha de login en Firestore
+      await _updateLastLogin(userCredential.user!.uid);
+
+      return await _getUserFromFirebase(userCredential.user!);
+    } on firebase_auth.FirebaseAuthException catch (e) {
+      throw _handleFirebaseAuthException(e);
+    } catch (e) {
+      throw AuthException('Error inesperado durante el login con Google: ${e.toString()}');
     }
   }
 

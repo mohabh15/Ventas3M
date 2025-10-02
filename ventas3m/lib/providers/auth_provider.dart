@@ -69,6 +69,27 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  // Método de login con Google
+  Future<bool> loginWithGoogle() async {
+    _setLoading(true);
+    _clearError();
+
+    try {
+      final user = await _authService.loginWithGoogle();
+      await _setAuthenticatedUser(user);
+
+      // Guardar sesión
+      await _saveSession();
+
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
   // Método de registro
   Future<bool> register(String email, String password, String name, {String? phone}) async {
     _setLoading(true);
