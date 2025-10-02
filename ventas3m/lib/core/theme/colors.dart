@@ -45,7 +45,7 @@ abstract class AppDarkColors {
    static const Color secondary = Color(0xFF66BB6A);      // Verde más claro para oscuro
    static const Color tertiary = Color(0xFFFFB74D);       // Naranja más claro para oscuro
    static const Color error = Color(0xFFEF5350);          // Rojo más claro para oscuro
-   static const Color surface = Color(0xFF1A1A1A);        // Superficie oscura
+   static const Color surface = Color(0xFF212121);        // Superficie oscura con mejor contraste
 
   // Colores adicionales para ventas (modo oscuro)
   static const Color sales = Color(0xFF42A5F5);          // Azul ventas oscuro
@@ -53,14 +53,14 @@ abstract class AppDarkColors {
   static const Color expenses = Color(0xFFEC407A);       // Rosa gastos oscuro
 
   // Colores de superficie y fondo (modo oscuro)
-  static const Color background = Color(0xFF0D1117);      // Fondo oscuro
+  static const Color background = Color(0xFF000000);      // Fondo completamente negro
   static const Color surfaceVariant = Color(0xFF1C1B1F); // Superficie variante oscura
   static const Color cardBackground = Color(0xFF1E1E1E); // Fondo tarjetas oscuro
 
   // Colores para texto (modo oscuro)
   static const Color textPrimary = Color(0xFFFFFFFF);    // Texto principal blanco
   static const Color textSecondary = Color(0xFFE0E0E0);  // Texto secundario gris claro (mejor contraste)
-  static const Color textDisabled = Color(0xFF777777);   // Texto deshabilitado gris (mejor contraste)
+  static const Color textDisabled = Color(0xFF9E9E9E);   // Texto deshabilitado gris claro (mejor contraste)
   static const Color textOnPrimary = Color(0xFF000000);  // Texto sobre primario negro
 
   // Estados de componentes (modo oscuro)

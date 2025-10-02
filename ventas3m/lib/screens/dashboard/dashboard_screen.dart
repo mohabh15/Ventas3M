@@ -13,7 +13,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.surface,
+        title: const Text('Dashboard'),
+        backgroundColor: Theme.of(context).colorScheme.surface.withOpacity(0.5),
         elevation: 0,
         actions: [
           IconButton(

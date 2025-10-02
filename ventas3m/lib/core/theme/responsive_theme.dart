@@ -234,6 +234,7 @@ class ResponsiveAppTheme {
       inversePrimary: Color(0xFFA4C8FF),
       surfaceTint: AppColors.primary,
     ),
+    scaffoldBackgroundColor: AppColors.background,
   );
 
   /// Tema oscuro base
@@ -270,6 +271,7 @@ class ResponsiveAppTheme {
       inversePrimary: Color(0xFF0061A4),
       surfaceTint: AppDarkColors.primary,
     ),
+    scaffoldBackgroundColor: AppDarkColors.background,
   );
 
   /// Tema de alto contraste base
@@ -306,6 +308,7 @@ class ResponsiveAppTheme {
       inversePrimary: Colors.black,
       surfaceTint: Colors.black,
     ),
+    scaffoldBackgroundColor: Colors.white,
   );
 
   /// AppBar responsiva

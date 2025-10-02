@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/theme/colors.dart';
 import '../screens/dashboard/dashboard_screen.dart';
 import '../screens/sales/sales_screen.dart';
 import '../screens/products/products_screen.dart';
@@ -46,7 +47,7 @@ class NavBarState extends State<NavBar> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.1),
+            color: AppColors.surface.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(30),
             boxShadow: [
               BoxShadow(
