@@ -46,11 +46,11 @@ class NavBarState extends State<NavBar> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface.withOpacity(0.1),
+            color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(30),
             boxShadow: [
               BoxShadow(
-                color: Theme.of(context).colorScheme.shadow.withOpacity(0.1),
+                color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.1),
                 spreadRadius: 2,
                 blurRadius: 10,
                 offset: const Offset(0, 5),
@@ -89,7 +89,7 @@ class NavBarState extends State<NavBar> {
           children: [
             Icon(
               icon,
-              color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+              color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
               size: isSelected ? 28 : 24,
             ),
             if (isSelected)
