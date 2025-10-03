@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 import '../models/project.dart';
 import '../models/user.dart';
+import '../models/product.dart';
 import '../services/auth_service.dart';
 
 class FirebaseService {
@@ -67,5 +69,71 @@ class FirebaseService {
     await _firestore.collection('projects').doc(projectId).update({
       'members': FieldValue.arrayRemove([email]),
     });
+  }
+
+  // Métodos para productos
+  Future<List<Product>> getProducts() async {
+    try {
+      final snapshot = await _firestore.collection('products').get();
+      return snapshot.docs.map((doc) => Product.fromMap(doc.data()..['id'] = doc.id)).toList();
+    } catch (e) {
+      debugPrint('Error getting products: $e');
+      return [];
+    }
+  }
+
+  Future<Product> createProduct(Product product) async {
+    try {
+      final data = product.toMap()..remove('id');
+      final docRef = await _firestore.collection('products').add(data);
+      await docRef.update({'id': docRef.id});
+      return product.copyWith(id: docRef.id);
+    } catch (e) {
+      debugPrint('Error creating product: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> updateProduct(Product product) async {
+    try {
+      await _firestore.collection('products').doc(product.id).update(product.toMap());
+    } catch (e) {
+      debugPrint('Error updating product: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> deleteProduct(String productId) async {
+    try {
+      await _firestore.collection('products').doc(productId).delete();
+    } catch (e) {
+      debugPrint('Error deleting product: $e');
+      rethrow;
+    }
+  }
+
+  Future<List<Product>> getProductsByCategory(String category) async {
+    try {
+      final snapshot = await _firestore.collection('products')
+          .where('category', isEqualTo: category)
+          .get();
+      return snapshot.docs.map((doc) => Product.fromMap(doc.data()..['id'] = doc.id)).toList();
+    } catch (e) {
+      debugPrint('Error getting products by category: $e');
+      return [];
+    }
+  }
+
+  Future<List<Product>> searchProducts(String query) async {
+    try {
+      final snapshot = await _firestore.collection('products')
+          .where('name', isGreaterThanOrEqualTo: query)
+          .where('name', isLessThanOrEqualTo: '$query\uf8ff')
+          .get();
+      return snapshot.docs.map((doc) => Product.fromMap(doc.data()..['id'] = doc.id)).toList();
+    } catch (e) {
+      debugPrint('Error searching products: $e');
+      return [];
+    }
   }
 }

@@ -248,15 +248,15 @@ class ResponsiveAppTheme {
       primaryContainer: Color(0xFF004A77),
       onPrimaryContainer: Color(0xFFD3E4FD),
       secondary: AppDarkColors.secondary,
-      onSecondary: Colors.black,
+      onSecondary: AppDarkColors.textOnPrimary,
       secondaryContainer: Color(0xFF205528),
       onSecondaryContainer: Color(0xFFA5D6A7),
       tertiary: AppDarkColors.tertiary,
-      onTertiary: Colors.black,
+      onTertiary: AppDarkColors.textOnPrimary,
       tertiaryContainer: Color(0xFF5C3C00),
       onTertiaryContainer: Color(0xFFFFE0B2),
       error: AppDarkColors.error,
-      onError: Colors.black,
+      onError: AppDarkColors.textOnPrimary,
       errorContainer: Color(0xFF93000A),
       onErrorContainer: Color(0xFFFFDAD6),
       surface: AppDarkColors.surface,
@@ -343,14 +343,14 @@ class ResponsiveAppTheme {
     return AppBarTheme(
       elevation: elevation,
       iconTheme: IconThemeData(
-        color: isDark ? Colors.white : Colors.black,
+        color: isDark ? AppDarkColors.textPrimary : AppColors.textPrimary,
         size: iconSize,
       ),
       titleTextStyle: TextStyle(
         fontFamily: 'Lufga',
         fontSize: titleFontSize,
         fontWeight: FontWeight.w600,
-        color: isDark ? Colors.white : Colors.black,
+        color: isDark ? AppDarkColors.textPrimary : AppColors.textPrimary,
       ),
     );
   }

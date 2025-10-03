@@ -38,6 +38,72 @@ abstract class AppColors {
   static const Color shadow = Color(0x1A000000);         // Sombra negra 10%
 }
 
+// Gradientes para la aplicación
+abstract class AppGradients {
+  // Gradiente primario (azul a verde)
+  static const LinearGradient primaryGradient = LinearGradient(
+    colors: [AppColors.primary, AppColors.secondary],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  // Gradiente de botones (azul a naranja)
+  static const LinearGradient buttonGradient = LinearGradient(
+    colors: [AppColors.primary, AppColors.tertiary],
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
+  );
+
+  // Gradiente de fondo (superficie a primario con opacidad)
+  static const LinearGradient backgroundGradient = LinearGradient(
+    colors: [AppColors.surface, Color(0x331976D2)], // Azul con 20% opacidad
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+  );
+
+  // Gradiente de éxito (verde a azul)
+  static const LinearGradient successGradient = LinearGradient(
+    colors: [AppColors.secondary, AppColors.primary],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  // Gradiente de advertencia (naranja a rojo)
+  static const LinearGradient warningGradient = LinearGradient(
+    colors: [AppColors.tertiary, AppColors.error],
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
+  );
+
+  // Gradiente de tarjetas (blanco a superficie)
+  static const LinearGradient cardGradient = LinearGradient(
+    colors: [AppColors.cardBackground, AppColors.surface],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+  );
+
+  // Gradiente de ventas (azul ventas a primario)
+  static const LinearGradient salesGradient = LinearGradient(
+    colors: [AppColors.sales, AppColors.primary],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  // Gradiente de productos (púrpura a primario)
+  static const LinearGradient productsGradient = LinearGradient(
+    colors: [AppColors.products, AppColors.primary],
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
+  );
+
+  // Gradiente de gastos (rosa a error)
+  static const LinearGradient expensesGradient = LinearGradient(
+    colors: [AppColors.expenses, AppColors.error],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+}
+
 // Colores para modo oscuro
 abstract class AppDarkColors {
   // Colores empresariales principales (modo oscuro)
@@ -81,6 +147,72 @@ abstract class AppDarkColors {
   static const Color avatarSettings = Color(0xFFFFB74D);  // Naranja más claro
   static const Color avatarTheme = Color(0xFF7986CB);     // Índigo más claro
   static const Color avatarLogout = Color(0xFFE57373);    // Rojo más claro
+}
+
+// Gradientes para modo oscuro
+abstract class AppDarkGradients {
+  // Gradiente primario oscuro (azul claro a verde claro)
+  static const LinearGradient primaryGradient = LinearGradient(
+    colors: [AppDarkColors.primary, AppDarkColors.secondary],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  // Gradiente de botones oscuro (azul claro a naranja claro)
+  static const LinearGradient buttonGradient = LinearGradient(
+    colors: [AppDarkColors.primary, AppDarkColors.tertiary],
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
+  );
+
+  // Gradiente de fondo oscuro (superficie oscura a primario con opacidad)
+  static const LinearGradient backgroundGradient = LinearGradient(
+    colors: [AppDarkColors.surface, Color(0x332196F3)], // Azul claro con 20% opacidad
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+  );
+
+  // Gradiente de éxito oscuro (verde claro a azul claro)
+  static const LinearGradient successGradient = LinearGradient(
+    colors: [AppDarkColors.secondary, AppDarkColors.primary],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  // Gradiente de advertencia oscuro (naranja claro a rojo claro)
+  static const LinearGradient warningGradient = LinearGradient(
+    colors: [AppDarkColors.tertiary, AppDarkColors.error],
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
+  );
+
+  // Gradiente de tarjetas oscuro (fondo tarjetas oscuro a superficie oscura)
+  static const LinearGradient cardGradient = LinearGradient(
+    colors: [AppDarkColors.cardBackground, AppDarkColors.surface],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+  );
+
+  // Gradiente de ventas oscuro (azul ventas oscuro a primario oscuro)
+  static const LinearGradient salesGradient = LinearGradient(
+    colors: [AppDarkColors.sales, AppDarkColors.primary],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  // Gradiente de productos oscuro (púrpura oscuro a primario oscuro)
+  static const LinearGradient productsGradient = LinearGradient(
+    colors: [AppDarkColors.products, AppDarkColors.primary],
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
+  );
+
+  // Gradiente de gastos oscuro (rosa oscuro a error oscuro)
+  static const LinearGradient expensesGradient = LinearGradient(
+    colors: [AppDarkColors.expenses, AppDarkColors.error],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
 }
 
 // Mapas de colores para acceso programático

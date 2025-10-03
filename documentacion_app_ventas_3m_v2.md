@@ -1406,7 +1406,7 @@ lib/
 #### Semana 15-16: Administración de Proyectos
 - [ ] Implementar gestión de miembros del proyecto
 - [ ] Crear configuración específica por proyecto
-- [ ] Desarrollar pantalla de administración del proyecto
+- [X] Desarrollar pantalla de administración del proyecto
 - [ ] Implementar roles básicos por proyecto
 - [ ] Crear sistema de invitaciones a proyectos
 - [ ] Desarrollar backup básico por proyecto
@@ -1477,60 +1477,6 @@ lib/
 
 ### 8.1 Estrategia de Seguridad
 
-#### Autenticación y Autorización
-```dart
-// Implementación de autenticación segura
-class AuthService {
-  Future<UserCredential> signInWithEmailAndPassword(
-    String email,
-    String password,
-  ) async {
-    try {
-      // Validar formato de email
-      if (!EmailValidator.validate(email)) {
-        throw InvalidEmailException();
-      }
-
-      // Autenticación con Firebase
-      final userCredential = await _firebaseAuth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-
-      // Verificar email
-      if (!userCredential.user!.emailVerified) {
-        throw EmailNotVerifiedException();
-      }
-
-      // Obtener información del usuario
-      final user = await _userService.getUser(userCredential.user!.uid);
-
-      // Verificar estado del usuario
-      if (!user.isActive) {
-        throw UserInactiveException();
-      }
-
-      // Registrar login en auditoría
-      await _auditService.logUserAction(
-        userId: user.id,
-        action: 'login',
-        success: true,
-      );
-
-      return userCredential;
-    } catch (e) {
-      // Registrar intento fallido
-      await _auditService.logUserAction(
-        userId: null,
-        action: 'login_failed',
-        success: false,
-        metadata: {'email': email, 'error': e.toString()},
-      );
-      rethrow;
-    }
-  }
-}
-```
 
 #### Encriptación de Datos
 ```dart
@@ -1688,81 +1634,7 @@ graph TD
 ### 9.2 Plan de Pruebas
 
 #### Pruebas Unitarias
-```dart
-// Ejemplo de test unitario para servicio de autenticación
-class AuthServiceTest {
-  group('AuthService', () {
-    late AuthService authService;
-    late MockFirebaseAuth mockFirebaseAuth;
-    late MockUserService mockUserService;
-    late MockAuditService mockAuditService;
 
-    setUp(() {
-      mockFirebaseAuth = MockFirebaseAuth();
-      mockUserService = MockUserService();
-      mockAuditService = MockAuditService();
-      authService = AuthService(
-        firebaseAuth: mockFirebaseAuth,
-        userService: mockUserService,
-        auditService: mockAuditService,
-      );
-    });
-
-    test('should authenticate user with valid credentials', () async {
-      // Arrange
-      const email = 'test@example.com';
-      const password = 'password123';
-      final mockUser = MockUser();
-
-      when(() => mockFirebaseAuth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      )).thenAnswer((_) async => MockUserCredential());
-
-      when(() => mockUserService.getUser(any()))
-          .thenAnswer((_) async => mockUser);
-
-      // Act
-      final result = await authService.signInWithEmailAndPassword(
-        email,
-        password,
-      );
-
-      // Assert
-      expect(result, isNotNull);
-      verify(() => mockAuditService.logUserAction(
-        userId: any(named: 'userId'),
-        action: 'login',
-        success: true,
-      )).called(1);
-    });
-
-    test('should throw exception for invalid credentials', () async {
-      // Arrange
-      const email = 'invalid@example.com';
-      const password = 'wrongpassword';
-
-      when(() => mockFirebaseAuth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      )).thenThrow(FirebaseAuthException(code: 'wrong-password'));
-
-      // Act & Assert
-      expect(
-        () => authService.signInWithEmailAndPassword(email, password),
-        throwsA(isA<AuthenticationException>()),
-      );
-
-      verify(() => mockAuditService.logUserAction(
-        userId: isNull,
-        action: 'login_failed',
-        success: false,
-        metadata: any(named: 'metadata'),
-      )).called(1);
-    });
-  });
-}
-```
 
 #### Pruebas de Integración
 ```dart
@@ -1867,22 +1739,6 @@ class SalesIntegrationTest {
 - **iOS**: iOS 12.0+
 - **Web**: Chrome 90+, Firefox 88+, Safari 14+
 - **Desktop**: Windows 10+, macOS 10.15+, Ubuntu 20.04+
-
-#### Configuración de Firebase
-```bash
-# 1. Crear proyecto en Firebase Console
-# 2. Habilitar servicios requeridos
-firebase enable firestore authentication functions storage
-
-# 3. Configurar reglas de seguridad
-firebase deploy --only firestore:rules
-
-# 4. Desplegar funciones
-firebase deploy --only functions
-
-# 5. Configurar aplicación Flutter
-firebase configure --project=ventas-3m-v2
-```
 
 ### 10.2 Guías de Usuario
 

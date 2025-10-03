@@ -304,17 +304,17 @@ class AppTheme {
       onPrimaryContainer: Color(0xFFD3E4FD),
 
       secondary: AppDarkColors.secondary,
-      onSecondary: Colors.black,
+      onSecondary: AppDarkColors.textOnPrimary,
       secondaryContainer: Color(0xFF205528),
       onSecondaryContainer: Color(0xFFA5D6A7),
 
       tertiary: AppDarkColors.tertiary,
-      onTertiary: Colors.black,
+      onTertiary: AppDarkColors.textOnPrimary,
       tertiaryContainer: Color(0xFF5C3C00),
       onTertiaryContainer: Color(0xFFFFE0B2),
 
       error: AppDarkColors.error,
-      onError: Colors.black,
+      onError: AppDarkColors.textOnPrimary,
       errorContainer: Color(0xFF93000A),
       onErrorContainer: Color(0xFFFFDAD6),
 
@@ -1013,5 +1013,80 @@ class AppTheme {
       isDark: false,
       highContrast: true,
     );
+  }
+}
+
+// Clase para acceder a gradientes según el tema
+class AppThemeGradients {
+  // Método para obtener gradiente de botones según el tema
+  static LinearGradient buttonGradient(BuildContext context) {
+    final theme = Theme.of(context);
+    return theme.brightness == Brightness.dark
+        ? AppDarkGradients.buttonGradient
+        : AppGradients.buttonGradient;
+  }
+
+  // Método para obtener gradiente de fondo según el tema
+  static LinearGradient backgroundGradient(BuildContext context) {
+    final theme = Theme.of(context);
+    return theme.brightness == Brightness.dark
+        ? AppDarkGradients.backgroundGradient
+        : AppGradients.backgroundGradient;
+  }
+
+  // Método para obtener gradiente primario según el tema
+  static LinearGradient primaryGradient(BuildContext context) {
+    final theme = Theme.of(context);
+    return theme.brightness == Brightness.dark
+        ? AppDarkGradients.primaryGradient
+        : AppGradients.primaryGradient;
+  }
+
+  // Método para obtener gradiente de éxito según el tema
+  static LinearGradient successGradient(BuildContext context) {
+    final theme = Theme.of(context);
+    return theme.brightness == Brightness.dark
+        ? AppDarkGradients.successGradient
+        : AppGradients.successGradient;
+  }
+
+  // Método para obtener gradiente de advertencia según el tema
+  static LinearGradient warningGradient(BuildContext context) {
+    final theme = Theme.of(context);
+    return theme.brightness == Brightness.dark
+        ? AppDarkGradients.warningGradient
+        : AppGradients.warningGradient;
+  }
+
+  // Método para obtener gradiente de tarjetas según el tema
+  static LinearGradient cardGradient(BuildContext context) {
+    final theme = Theme.of(context);
+    return theme.brightness == Brightness.dark
+        ? AppDarkGradients.cardGradient
+        : AppGradients.cardGradient;
+  }
+
+  // Método para obtener gradiente de ventas según el tema
+  static LinearGradient salesGradient(BuildContext context) {
+    final theme = Theme.of(context);
+    return theme.brightness == Brightness.dark
+        ? AppDarkGradients.salesGradient
+        : AppGradients.salesGradient;
+  }
+
+  // Método para obtener gradiente de productos según el tema
+  static LinearGradient productsGradient(BuildContext context) {
+    final theme = Theme.of(context);
+    return theme.brightness == Brightness.dark
+        ? AppDarkGradients.productsGradient
+        : AppGradients.productsGradient;
+  }
+
+  // Método para obtener gradiente de gastos según el tema
+  static LinearGradient expensesGradient(BuildContext context) {
+    final theme = Theme.of(context);
+    return theme.brightness == Brightness.dark
+        ? AppDarkGradients.expensesGradient
+        : AppGradients.expensesGradient;
   }
 }

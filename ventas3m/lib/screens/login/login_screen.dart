@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/widgets/app_button.dart';
-import '../../core/widgets/loading_widget.dart';
+import '../../core/widgets/modern_forms.dart';
+import '../../core/theme/colors.dart';
 import '../../providers/auth_provider.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -11,17 +12,64 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _obscurePassword = true;
+
+  // Controladores de animación para efectos de entrada
+  late AnimationController _fadeController;
+  late AnimationController _slideController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeAnimations();
+  }
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _fadeController.dispose();
+    _slideController.dispose();
     super.dispose();
+  }
+
+  void _initializeAnimations() {
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+
+    _slideController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeOut,
+    ));
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.3),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _slideController,
+      curve: Curves.easeOut,
+    ));
+
+    // Iniciar animaciones después de un breve retraso
+    Future.delayed(const Duration(milliseconds: 100), () {
+      _fadeController.forward();
+      _slideController.forward();
+    });
   }
 
   void _navigateToRegister() {
@@ -39,9 +87,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final success = await authProvider.login(_emailController.text, _passwordController.text);
 
     if (!success && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(authProvider.errorMessage ?? 'Error al iniciar sesión')),
-      );
+      _showErrorSnackbar(authProvider.errorMessage ?? 'Error al iniciar sesión');
     }
   }
 
@@ -55,212 +101,323 @@ class _LoginScreenState extends State<LoginScreen> {
     final success = await authProvider.loginWithGoogle();
 
     if (!success && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(authProvider.errorMessage ?? 'Error al iniciar sesión con Google')),
-      );
+      _showErrorSnackbar(authProvider.errorMessage ?? 'Error al iniciar sesión con Google');
     }
+  }
+
+  void _showErrorSnackbar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(Icons.error_outline, color: AppColors.textOnPrimary),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                message,
+                style: TextStyle(
+                  fontFamily: 'Lufga',
+                  color: AppColors.textOnPrimary,
+                ),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: AppColors.error,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                SizedBox(height: size.height * 0.05),
-
-                // Logo o título
-                Center(
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: AppGradients.backgroundGradient,
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            child: Form(
+              key: _formKey,
+              child: FadeTransition(
+                opacity: _fadeAnimation,
+                child: SlideTransition(
+                  position: _slideAnimation,
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Icon(
-                        Icons.store,
-                        size: 80,
-                        color: theme.colorScheme.primary,
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        'Ventas 3M',
-                        style: theme.textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: theme.colorScheme.primary,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        'Sistema de Gestión de Ventas',
-                        style: theme.textTheme.bodyLarge?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
+                      SizedBox(height: size.height * 0.02),
+
+                      // Logo moderno centrado
+                      _buildLogoSection(),
+
+                      SizedBox(height: size.height * 0.06),
+
+                      // Campos de formulario modernos
+                      _buildEmailField(),
+
+                      const SizedBox(height: 16),
+
+                      _buildPasswordField(),
+
+                      const SizedBox(height: 8),
+
+                      // Navegación moderna
+                      _buildForgotPasswordLink(),
+
+                      const SizedBox(height: 32),
+
+                      // Botones modernos
+                      _buildLoginButton(),
+
+                      const SizedBox(height: 16),
+
+                      _buildGoogleButton(),
+
+                      const SizedBox(height: 24),
+
+                      // Separador moderno
+                      _buildSeparator(),
+
+                      const SizedBox(height: 24),
+
+                      _buildGuestButton(),
+
+                      const SizedBox(height: 16),
+
+                      _buildRegisterButton(),
+
+                      SizedBox(height: size.height * 0.04),
                     ],
                   ),
                 ),
-
-                SizedBox(height: size.height * 0.08),
-
-                // Campo de email
-                TextFormField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(
-                    labelText: 'Correo electrónico',
-                    hintText: 'Ingresa tu correo electrónico',
-                    prefixIcon: Icon(Icons.email),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Por favor ingresa tu correo electrónico';
-                    }
-                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-                      return 'Ingresa un correo electrónico válido';
-                    }
-                    return null;
-                  },
-                ),
-
-                const SizedBox(height: 12),
-
-                // Campo de contraseña
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: _obscurePassword,
-                  decoration: InputDecoration(
-                    labelText: 'Contraseña',
-                    hintText: 'Ingresa tu contraseña',
-                    prefixIcon: const Icon(Icons.lock),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword ? Icons.visibility : Icons.visibility_off,
-                      ),
-                      onPressed: () {
-                        setState(() => _obscurePassword = !_obscurePassword);
-                      },
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Por favor ingresa tu contraseña';
-                    }
-                    if (value.length < 6) {
-                      return 'La contraseña debe tener al menos 6 caracteres';
-                    }
-                    return null;
-                  },
-                ),
-
-                const SizedBox(height: 6),
-
-                // Enlace "¿Olvidaste tu contraseña?"
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: _navigateToForgotPassword,
-                    child: Text(
-                      '¿Olvidaste tu contraseña?',
-                      style: TextStyle(
-                        color: theme.colorScheme.primary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-
-                // Botón de iniciar sesión
-                Consumer<AuthProvider>(
-                  builder: (context, authProvider, child) {
-                    if (authProvider.isLoading) {
-                      return const LoadingWidget();
-                    }
-                    return AppButton(
-                      text: 'Iniciar Sesión',
-                      onPressed: _handleLogin,
-                      size: AppButtonSize.large,
-                    );
-                  },
-                ),
-
-                const SizedBox(height: 12),
-
-                // Botón de continuar con Google
-                Consumer<AuthProvider>(
-                  builder: (context, authProvider, child) {
-                    if (authProvider.isLoading) {
-                      return const LoadingWidget();
-                    }
-                    return AppButton(
-                      text: 'Continuar con Google',
-                      onPressed: _handleGoogleLogin,
-                      variant: AppButtonVariant.outline,
-                      size: AppButtonSize.large,
-                      leadingIcon: Icon(Icons.g_mobiledata), // Placeholder, usarías un icono de Google
-                    );
-                  },
-                ),
-
-                const SizedBox(height: 20),
-
-                // Separador
-                Row(
-                  children: [
-                    Expanded(child: Divider(color: theme.colorScheme.outline)),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Text(
-                        'O',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ),
-                    Expanded(child: Divider(color: theme.colorScheme.outline)),
-                  ],
-                ),
-
-                const SizedBox(height: 20),
-
-                // Botón de entrar como invitado
-                Consumer<AuthProvider>(
-                  builder: (context, authProvider, child) {
-                    if (authProvider.isLoading) {
-                      return const LoadingWidget();
-                    }
-                    return AppButton(
-                      text: 'Entrar como Invitado',
-                      onPressed: _handleGuestLogin,
-                      variant: AppButtonVariant.outline,
-                      size: AppButtonSize.large,
-                    );
-                  },
-                ),
-
-                const SizedBox(height: 12),
-
-                // Botón de registro
-                AppButton(
-                  text: 'Crear Cuenta',
-                  onPressed: _navigateToRegister,
-                  variant: AppButtonVariant.outline,
-                  size: AppButtonSize.large,
-                ),
-
-                SizedBox(height: size.height * 0.03),
-              ],
+              ),
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildLogoSection() {
+    return Center(
+      child: Column(
+        children: [
+          // Logo con sombra moderna
+          Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              gradient: AppGradients.primaryGradient,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withValues(alpha: 0.3),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Icon(
+              Icons.store_rounded,
+              size: 48,
+              color: AppColors.textOnPrimary,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Ventas 3M',
+            style: TextStyle(
+              fontFamily: 'Lufga',
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+              letterSpacing: -0.5,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Sistema de Gestión de Ventas',
+            style: TextStyle(
+              fontFamily: 'Lufga',
+              fontSize: 16,
+              fontWeight: FontWeight.w400,
+              color: AppColors.textSecondary,
+              letterSpacing: 0.2,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmailField() {
+    return AppTextField(
+      label: 'Correo electrónico',
+      hint: 'Ingresa tu correo electrónico',
+      leadingIcon: Icon(Icons.email_outlined, color: AppColors.primary),
+      type: AppTextFieldType.email,
+      controller: _emailController,
+      borderRadius: 16,
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Por favor ingresa tu correo electrónico';
+        }
+        if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+          return 'Ingresa un correo electrónico válido';
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget _buildPasswordField() {
+    return AppTextField(
+      label: 'Contraseña',
+      hint: 'Ingresa tu contraseña',
+      leadingIcon: Icon(Icons.lock_outlined, color: AppColors.primary),
+      type: AppTextFieldType.password,
+      controller: _passwordController,
+      borderRadius: 16,
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Por favor ingresa tu contraseña';
+        }
+        if (value.length < 6) {
+          return 'La contraseña debe tener al menos 6 caracteres';
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget _buildForgotPasswordLink() {
+    return Align(
+      alignment: Alignment.centerRight,
+      child: TextButton(
+        onPressed: _navigateToForgotPassword,
+        style: TextButton.styleFrom(
+          foregroundColor: AppColors.primary,
+          textStyle: TextStyle(
+            fontFamily: 'Lufga',
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            decoration: TextDecoration.underline,
+            decorationColor: AppColors.primary.withValues(alpha: 0.5),
+          ),
+        ),
+        child: const Text('¿Olvidaste tu contraseña?'),
+      ),
+    );
+  }
+
+  Widget _buildLoginButton() {
+    return Consumer<AuthProvider>(
+      builder: (context, authProvider, child) {
+        return AppButton(
+          text: 'Iniciar Sesión',
+          onPressed: authProvider.isLoading ? null : _handleLogin,
+          variant: AppButtonVariant.gradient,
+          size: AppButtonSize.large,
+          isLoading: authProvider.isLoading,
+          width: double.infinity,
+        );
+      },
+    );
+  }
+
+  Widget _buildGoogleButton() {
+    return Consumer<AuthProvider>(
+      builder: (context, authProvider, child) {
+        return AppButton(
+          text: 'Continuar con Google',
+          onPressed: authProvider.isLoading ? null : _handleGoogleLogin,
+          variant: AppButtonVariant.outline,
+          size: AppButtonSize.large,
+          leadingIcon: Icon(Icons.g_mobiledata_rounded, color: AppColors.primary),
+          width: double.infinity,
+        );
+      },
+    );
+  }
+
+  Widget _buildSeparator() {
+    return Row(
+      children: [
+        Expanded(
+          child: Container(
+            height: 1,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.border.withValues(alpha: 0),
+                  AppColors.border.withValues(alpha: 0.5),
+                  AppColors.border.withValues(alpha: 0),
+                ],
+              ),
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Text(
+            'O',
+            style: TextStyle(
+              fontFamily: 'Lufga',
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Container(
+            height: 1,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.border.withValues(alpha: 0),
+                  AppColors.border.withValues(alpha: 0.5),
+                  AppColors.border.withValues(alpha: 0),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGuestButton() {
+    return Consumer<AuthProvider>(
+      builder: (context, authProvider, child) {
+        return AppButton(
+          text: 'Entrar como Invitado',
+          onPressed: authProvider.isLoading ? null : _handleGuestLogin,
+          variant: AppButtonVariant.ghost,
+          size: AppButtonSize.large,
+          width: double.infinity,
+        );
+      },
+    );
+  }
+
+  Widget _buildRegisterButton() {
+    return AppButton(
+      text: 'Crear Cuenta',
+      onPressed: _navigateToRegister,
+      variant: AppButtonVariant.outline,
+      size: AppButtonSize.large,
+      width: double.infinity,
     );
   }
 }

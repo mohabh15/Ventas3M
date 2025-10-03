@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../widgets/loading_widget.dart';
 
 enum ResponsiveSize {
   mobile,
@@ -13,9 +12,29 @@ enum ResponsiveDensity {
   comfortable,
 }
 
+enum DeviceType {
+  phone,
+  tablet,
+  desktop,
+  tv,
+}
+
+enum DeviceOrientation {
+  portrait,
+  landscape,
+}
+
 class ResponsiveBreakpoints {
-  static const double mobileBreakpoint = 600;
-  static const double tabletBreakpoint = 1200;
+  // Breakpoints optimizados para diferentes dispositivos
+  static const double mobileBreakpoint = 768;
+  static const double tabletBreakpoint = 1024;
+  static const double desktopBreakpoint = 1440;
+  static const double largeDesktopBreakpoint = 1920;
+
+  // Breakpoints específicos para diferentes contextos
+  static const double compactMobileBreakpoint = 375; // iPhone SE
+  static const double standardMobileBreakpoint = 414; // iPhone Plus
+  static const double largeMobileBreakpoint = 480; // Surface Duo, etc.
 
   static ResponsiveSize getSize(double width) {
     if (width < mobileBreakpoint) {
@@ -30,6 +49,20 @@ class ResponsiveBreakpoints {
   static bool isMobile(double width) => getSize(width) == ResponsiveSize.mobile;
   static bool isTablet(double width) => getSize(width) == ResponsiveSize.tablet;
   static bool isDesktop(double width) => getSize(width) == ResponsiveSize.desktop;
+
+  // Nuevos métodos para breakpoints más granulares
+  static bool isCompactMobile(double width) => width < compactMobileBreakpoint;
+  static bool isStandardMobile(double width) =>
+      width >= compactMobileBreakpoint && width < standardMobileBreakpoint;
+  static bool isLargeMobile(double width) =>
+      width >= standardMobileBreakpoint && width < mobileBreakpoint;
+  static bool isSmallTablet(double width) =>
+      width >= mobileBreakpoint && width < 900;
+  static bool isLargeTablet(double width) =>
+      width >= 900 && width < tabletBreakpoint;
+  static bool isSmallDesktop(double width) =>
+      width >= tabletBreakpoint && width < desktopBreakpoint;
+  static bool isLargeDesktop(double width) => width >= desktopBreakpoint;
 }
 
 class ResponsiveCardPadding {
@@ -116,6 +149,28 @@ class ResponsiveUtils {
   static bool isDesktop(BuildContext context) =>
       ResponsiveBreakpoints.isDesktop(MediaQuery.of(context).size.width);
 
+  // Nuevos métodos granulares
+  static bool isCompactMobile(BuildContext context) =>
+      ResponsiveBreakpoints.isCompactMobile(MediaQuery.of(context).size.width);
+
+  static bool isStandardMobile(BuildContext context) =>
+      ResponsiveBreakpoints.isStandardMobile(MediaQuery.of(context).size.width);
+
+  static bool isLargeMobile(BuildContext context) =>
+      ResponsiveBreakpoints.isLargeMobile(MediaQuery.of(context).size.width);
+
+  static bool isSmallTablet(BuildContext context) =>
+      ResponsiveBreakpoints.isSmallTablet(MediaQuery.of(context).size.width);
+
+  static bool isLargeTablet(BuildContext context) =>
+      ResponsiveBreakpoints.isLargeTablet(MediaQuery.of(context).size.width);
+
+  static bool isSmallDesktop(BuildContext context) =>
+      ResponsiveBreakpoints.isSmallDesktop(MediaQuery.of(context).size.width);
+
+  static bool isLargeDesktop(BuildContext context) =>
+      ResponsiveBreakpoints.isLargeDesktop(MediaQuery.of(context).size.width);
+
   static EdgeInsetsGeometry getResponsivePadding(BuildContext context, {
     bool small = false,
     bool large = false,
@@ -137,6 +192,119 @@ class ResponsiveUtils {
 
   static double getResponsiveMargin(BuildContext context) {
     return ResponsiveCardProperties.getMargin(getCurrentSize(context));
+  }
+
+  // Nuevas utilidades avanzadas
+  static double getResponsiveFontSize(BuildContext context, double baseSize) {
+    final mediaQuery = MediaQuery.of(context);
+    final pixelRatio = mediaQuery.devicePixelRatio;
+
+    // Ajuste basado en el tamaño de pantalla
+    double multiplier = 1.0;
+
+    if (isCompactMobile(context)) {
+      multiplier = 0.85;
+    } else if (isStandardMobile(context)) {
+      multiplier = 0.9;
+    } else if (isLargeMobile(context)) {
+      multiplier = 0.95;
+    } else if (isSmallTablet(context)) {
+      multiplier = 1.0;
+    } else if (isLargeTablet(context)) {
+      multiplier = 1.05;
+    } else if (isSmallDesktop(context)) {
+      multiplier = 1.1;
+    } else if (isLargeDesktop(context)) {
+      multiplier = 1.15;
+    }
+
+    // Ajuste por orientación
+    if (mediaQuery.orientation == Orientation.landscape && isMobile(context)) {
+      multiplier *= 0.9;
+    }
+
+    // Ajuste por densidad de píxeles
+    if (pixelRatio > 2.5) {
+      multiplier *= 0.95;
+    } else if (pixelRatio < 1.5) {
+      multiplier *= 1.05;
+    }
+
+    return baseSize * multiplier;
+  }
+
+  static EdgeInsetsGeometry getResponsiveContentPadding(BuildContext context) {
+    if (isCompactMobile(context)) {
+      return const EdgeInsets.symmetric(horizontal: 12, vertical: 8);
+    } else if (isStandardMobile(context)) {
+      return const EdgeInsets.symmetric(horizontal: 16, vertical: 12);
+    } else if (isLargeMobile(context)) {
+      return const EdgeInsets.symmetric(horizontal: 20, vertical: 16);
+    } else if (isSmallTablet(context)) {
+      return const EdgeInsets.symmetric(horizontal: 24, vertical: 20);
+    } else if (isLargeTablet(context)) {
+      return const EdgeInsets.symmetric(horizontal: 28, vertical: 24);
+    } else if (isSmallDesktop(context)) {
+      return const EdgeInsets.symmetric(horizontal: 32, vertical: 28);
+    } else {
+      return const EdgeInsets.symmetric(horizontal: 40, vertical: 32);
+    }
+  }
+
+  static int getResponsiveGridCrossAxisCount(BuildContext context) {
+    if (isCompactMobile(context)) {
+      return 1;
+    } else if (isStandardMobile(context)) {
+      return 2;
+    } else if (isLargeMobile(context)) {
+      return 2;
+    } else if (isSmallTablet(context)) {
+      return 2;
+    } else if (isLargeTablet(context)) {
+      return 3;
+    } else if (isSmallDesktop(context)) {
+      return 4;
+    } else {
+      return 5;
+    }
+  }
+
+  static double getResponsiveGridChildAspectRatio(BuildContext context) {
+    if (isMobile(context)) {
+      return 0.75; // Más alto que ancho para móviles
+    } else if (isTablet(context)) {
+      return 0.8; // Ligeramente más alto
+    } else {
+      return 0.9; // Casi cuadrado para desktop
+    }
+  }
+
+  static double getResponsiveIconSize(BuildContext context, {double? size}) {
+    final baseSize = size ?? 24.0;
+    return getResponsiveFontSize(context, baseSize);
+  }
+
+  static double getResponsiveButtonHeight(BuildContext context) {
+    if (isCompactMobile(context)) {
+      return 44; // Mínimo recomendado para touch targets
+    } else if (isMobile(context)) {
+      return 48;
+    } else if (isTablet(context)) {
+      return 52;
+    } else {
+      return 56;
+    }
+  }
+
+  static double getResponsiveTouchTargetSize(BuildContext context) {
+    // Mínimo 44px según guías de accesibilidad
+    if (isCompactMobile(context)) {
+      return 44;
+    } else if (isMobile(context)) {
+      return 48;
+    } else {
+      return 44;
+    }
   }
 }
 
@@ -194,134 +362,234 @@ class ResponsiveDensityHandler {
   }
 }
 
-class ResponsiveLoadingWidget {
-  static double getSize(BuildContext context, {LoadingSize? size}) {
-    final mediaQuery = MediaQuery.of(context);
-    final screenWidth = mediaQuery.size.width;
 
-    if (size != null) {
-      switch (size) {
-        case LoadingSize.small:
-          return 16;
-        case LoadingSize.medium:
-          return 24;
-        case LoadingSize.large:
-          return 32;
-        case LoadingSize.adaptive:
-          break;
+/// Clase avanzada para detección de dispositivo y capacidades
+class DeviceCapabilities {
+  static bool isTouchDevice(BuildContext context) {
+    final mediaQuery = MediaQuery.of(context);
+    // Detectar si es un dispositivo táctil basado en el tamaño y plataforma
+    return mediaQuery.size.width < 1024 ||
+           mediaQuery.size.height < 768;
+  }
+
+  static bool isDesktopDevice(BuildContext context) {
+    return MediaQuery.of(context).size.width >= 1024;
+  }
+
+  static bool supportsHover(BuildContext context) {
+    return MediaQuery.of(context).size.width >= 1024;
+  }
+
+
+  static double getOptimalTextScaleFactor(BuildContext context) {
+    final mediaQuery = MediaQuery.of(context);
+    final width = mediaQuery.size.width;
+
+    // Ajustar escala de texto basada en el tamaño de pantalla
+    if (width < 375) {
+      return 0.85;
+    } else if (width < 414) {
+      return 0.9;
+    } else if (width < 768) {
+      return 0.95;
+    } else if (width < 1024) {
+      return 1.0;
+    } else if (width < 1440) {
+      return 1.05;
+    } else {
+      return 1.1;
+    }
+  }
+
+  static bool shouldUseCompactLayout(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    return width < 600;
+  }
+
+  static bool shouldUseTabletLayout(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    return width >= 600 && width < 1024;
+  }
+
+  static bool shouldUseDesktopLayout(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    return width >= 1024;
+  }
+}
+
+/// Gestor avanzado de navegación responsive
+class ResponsiveNavigationManager {
+  static NavigationType getOptimalNavigationType(BuildContext context) {
+    if (DeviceCapabilities.isTouchDevice(context)) {
+      if (ResponsiveUtils.isCompactMobile(context)) {
+        return NavigationType.bottomNavigation;
+      } else if (ResponsiveUtils.isTablet(context)) {
+        return NavigationType.navigationRail;
+      } else {
+        return NavigationType.bottomNavigation;
       }
-    }
-
-    // Lógica adaptativa basada en el contexto
-    if (screenWidth < 600) {
-      return 20;
-    } else if (screenWidth < 1200) {
-      return 24;
     } else {
-      return 28;
+      return NavigationType.permanentDrawer;
     }
   }
 
-  static double getStrokeWidth(BuildContext context, {LoadingSize? size}) {
-    final mediaQuery = MediaQuery.of(context);
-    final screenWidth = mediaQuery.size.width;
-    final devicePixelRatio = mediaQuery.devicePixelRatio;
+  static double getNavigationWidth(BuildContext context) {
+    final navigationType = getOptimalNavigationType(context);
 
-    double baseStrokeWidth;
-
-    if (size != null) {
-      switch (size) {
-        case LoadingSize.small:
-          baseStrokeWidth = 2;
-          break;
-        case LoadingSize.medium:
-          baseStrokeWidth = 3;
-          break;
-        case LoadingSize.large:
-          baseStrokeWidth = 4;
-          break;
-        case LoadingSize.adaptive:
-          baseStrokeWidth = 3;
-          break;
-      }
-    } else {
-      baseStrokeWidth = 3;
-    }
-
-    // Ajustar según el tamaño de pantalla
-    if (screenWidth < 600) {
-      baseStrokeWidth = 2.5;
-    } else if (screenWidth > 1200) {
-      baseStrokeWidth = 3.5;
-    }
-
-    // Ajustar por densidad de píxeles para mejor visibilidad
-    if (devicePixelRatio > 2.5) {
-      baseStrokeWidth *= 0.9;
-    } else if (devicePixelRatio < 1.5) {
-      baseStrokeWidth *= 1.1;
-    }
-
-    return baseStrokeWidth;
-  }
-
-  static LoadingSize getAdaptiveSize(BuildContext context) {
-    final mediaQuery = MediaQuery.of(context);
-    final screenWidth = mediaQuery.size.width;
-
-    if (screenWidth < 600) {
-      return LoadingSize.small;
-    } else if (screenWidth < 1200) {
-      return LoadingSize.medium;
-    } else {
-      return LoadingSize.large;
+    switch (navigationType) {
+      case NavigationType.bottomNavigation:
+        return MediaQuery.of(context).size.width;
+      case NavigationType.navigationRail:
+        return 80;
+      case NavigationType.permanentDrawer:
+        return 280;
+      case NavigationType.modalDrawer:
+        return 320;
     }
   }
 
-  static LoadingWidget createResponsive({
-    Key? key,
-    LoadingSize size = LoadingSize.adaptive,
-    double? strokeWidth,
-    Color? color,
-    Color? backgroundColor,
-    double? value,
-    String? semanticsLabel,
-    String? semanticsValue,
-  }) {
-    return LoadingWidget(
-      key: key,
-      size: size,
-      strokeWidth: strokeWidth,
-      color: color,
-      backgroundColor: backgroundColor,
-      value: value,
-      semanticsLabel: semanticsLabel,
-      semanticsValue: semanticsValue,
-    );
+  static bool shouldShowLabels(BuildContext context) {
+    final navigationType = getOptimalNavigationType(context);
+
+    switch (navigationType) {
+      case NavigationType.bottomNavigation:
+        return !ResponsiveUtils.isCompactMobile(context);
+      case NavigationType.navigationRail:
+        return false; // Íconos extendidos
+      case NavigationType.permanentDrawer:
+        return true;
+      case NavigationType.modalDrawer:
+        return true;
+    }
+  }
+}
+
+/// Tipos de navegación disponibles
+enum NavigationType {
+  bottomNavigation,
+  navigationRail,
+  permanentDrawer,
+  modalDrawer,
+}
+
+/// Gestor de layouts adaptativos
+class ResponsiveLayoutManager {
+  static LayoutType getOptimalLayoutType(BuildContext context, String screenName) {
+    final width = MediaQuery.of(context).size.width;
+
+    switch (screenName) {
+      case 'dashboard':
+        if (width < 768) {
+          return LayoutType.singleColumn;
+        } else if (width < 1024) {
+          return LayoutType.twoColumn;
+        } else {
+          return LayoutType.threeColumn;
+        }
+
+      case 'products':
+        if (width < 768) {
+          return LayoutType.listView;
+        } else {
+          return LayoutType.gridView;
+        }
+
+      case 'sales':
+        if (width < 768) {
+          return LayoutType.compactForm;
+        } else {
+          return LayoutType.expandedForm;
+        }
+
+      default:
+        return LayoutType.adaptive;
+    }
   }
 
-  static LoadingWidget createForContext(
-    BuildContext context, {
-    Key? key,
-    bool useAdaptiveSize = true,
-    double? strokeWidth,
-    Color? color,
-    Color? backgroundColor,
-    double? value,
-    String? semanticsLabel,
-    String? semanticsValue,
-  }) {
-    final adaptiveSize = useAdaptiveSize ? getAdaptiveSize(context) : LoadingSize.medium;
+  static int getGridCrossAxisCount(BuildContext context, String screenName) {
+    final width = MediaQuery.of(context).size.width;
 
-    return LoadingWidget(
-      key: key,
-      size: adaptiveSize,
-      strokeWidth: strokeWidth ?? getStrokeWidth(context, size: adaptiveSize),
-      color: color,
-      backgroundColor: backgroundColor,
-      value: value,
-      semanticsLabel: semanticsLabel,
-      semanticsValue: semanticsValue,
-    );
+    switch (screenName) {
+      case 'products':
+        if (width < 600) return 1;
+        if (width < 900) return 2;
+        if (width < 1200) return 3;
+        if (width < 1600) return 4;
+        return 5;
+
+      case 'dashboard':
+        if (width < 768) return 1;
+        if (width < 1024) return 2;
+        return 3;
+
+      default:
+        return ResponsiveUtils.getResponsiveGridCrossAxisCount(context);
+    }
   }
+}
+
+/// Tipos de layout disponibles
+enum LayoutType {
+  singleColumn,
+  twoColumn,
+  threeColumn,
+  listView,
+  gridView,
+  compactForm,
+  expandedForm,
+  adaptive,
+}
+
+/// Gestor de animaciones responsive
+class ResponsiveAnimationManager {
+  static Duration getOptimalAnimationDuration(BuildContext context, AnimationType type) {
+    final isMobile = ResponsiveUtils.isMobile(context);
+    final isSlowDevice = MediaQuery.of(context).devicePixelRatio < 2.0;
+
+    Duration baseDuration;
+    switch (type) {
+      case AnimationType.micro:
+        baseDuration = const Duration(milliseconds: 150);
+        break;
+      case AnimationType.fast:
+        baseDuration = const Duration(milliseconds: 200);
+        break;
+      case AnimationType.normal:
+        baseDuration = const Duration(milliseconds: 300);
+        break;
+      case AnimationType.slow:
+        baseDuration = const Duration(milliseconds: 500);
+        break;
+    }
+
+    // Ajustar para dispositivos móviles o lentos
+    if (isMobile || isSlowDevice) {
+      return Duration(milliseconds: (baseDuration.inMilliseconds * 1.2).round());
+    }
+
+    return baseDuration;
+  }
+
+  static Curve getOptimalAnimationCurve(BuildContext context, AnimationType type) {
+    final isMobile = ResponsiveUtils.isMobile(context);
+
+    switch (type) {
+      case AnimationType.micro:
+        return Curves.easeOut;
+      case AnimationType.fast:
+        return isMobile ? Curves.easeOut : Curves.easeInOut;
+      case AnimationType.normal:
+        return Curves.easeInOut;
+      case AnimationType.slow:
+        return Curves.easeInOutCubic;
+    }
+  }
+}
+
+/// Tipos de animación
+enum AnimationType {
+  micro,
+  fast,
+  normal,
+  slow,
 }
