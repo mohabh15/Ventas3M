@@ -1416,7 +1416,8 @@ lib/
 #### Semana 17-19: Gestión de Productos
 - [X] Implementar modelo de datos Product
 - [X] Crear pantalla de gestión de productos
-- [ ] Desarrollar formulario de añadir/editar productos
+- [X] Desarrollar formulario de añadir
+- [ ] Desarrollar editar productos
 - [ ] Implementar control de stock básico
 - [ ] Crear categorías de productos
 - [ ] Desarrollar búsqueda y filtros de productos

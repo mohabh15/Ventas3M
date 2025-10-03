@@ -17,21 +17,8 @@ class GradientAppBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       title: Text(title),
       foregroundColor: Colors.white,
-      elevation: elevation,
-      flexibleSpace: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              Color(0xFF0D47A1), // Azul oscuro
-              Color(0xFF1976D2), // Azul primario
-              Color(0xFF42A5F5), // Azul claro
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-      ),
-      backgroundColor: Colors.transparent, // Transparente para que se vea el gradiente
+      elevation: 0,
+      backgroundColor: Colors.transparent,
       actions: actions,
     );
   }

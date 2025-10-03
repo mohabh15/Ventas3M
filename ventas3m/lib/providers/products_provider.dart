@@ -20,6 +20,7 @@ class ProductsProvider extends ChangeNotifier {
 
   ProductsProvider() {
     _initializeProvider();
+    _loadSampleProducts();
   }
 
   // Método para establecer el Settings Provider para sincronización
@@ -188,5 +189,75 @@ class ProductsProvider extends ChangeNotifier {
       _settingsProvider!.removeListener(_onProjectChanged);
     }
     super.dispose();
+  }
+
+  // Método para cargar productos de ejemplo para demostración
+  void _loadSampleProducts() {
+    // Solo cargar productos de ejemplo si no hay productos reales
+    if (_products.isEmpty && !_isLoading) {
+      _products = [
+        Product(
+          id: 'laptop-gaming-001',
+          name: 'Laptop Gaming',
+          description: 'Laptop gaming de alto rendimiento con tarjeta gráfica dedicada',
+          basePrice: 15999.0,
+          category: 'Electrónica',
+          createdAt: DateTime.now().subtract(const Duration(days: 5)),
+          updatedAt: DateTime.now().subtract(const Duration(days: 5)),
+          projectId: 'demo-project',
+        ),
+        Product(
+          id: 'iphone-15-pro-002',
+          name: 'iPhone 15 Pro',
+          description: 'Smartphone premium con cámara avanzada y procesador A17 Pro',
+          basePrice: 24999.0,
+          category: 'Electrónica',
+          createdAt: DateTime.now().subtract(const Duration(days: 3)),
+          updatedAt: DateTime.now().subtract(const Duration(days: 3)),
+          projectId: 'demo-project',
+        ),
+        Product(
+          id: 'audifonos-pro-003',
+          name: 'Audífonos Pro',
+          description: 'Audífonos inalámbricos con cancelación de ruido activa',
+          basePrice: 3499.0,
+          category: 'Electrónica',
+          createdAt: DateTime.now().subtract(const Duration(days: 7)),
+          updatedAt: DateTime.now().subtract(const Duration(days: 7)),
+          projectId: 'demo-project',
+        ),
+        Product(
+          id: 'ipad-air-004',
+          name: 'iPad Air',
+          description: 'Tablet ligera y potente perfecta para productividad y creatividad',
+          basePrice: 12999.0,
+          category: 'Electrónica',
+          createdAt: DateTime.now().subtract(const Duration(days: 2)),
+          updatedAt: DateTime.now().subtract(const Duration(days: 2)),
+          projectId: 'demo-project',
+        ),
+        Product(
+          id: 'camara-dslr-005',
+          name: 'Cámara DSLR',
+          description: 'Cámara réflex digital profesional de 24 megapíxeles',
+          basePrice: 18999.0,
+          category: 'Electrónica',
+          createdAt: DateTime.now().subtract(const Duration(days: 10)),
+          updatedAt: DateTime.now().subtract(const Duration(days: 10)),
+          projectId: 'demo-project',
+        ),
+        Product(
+          id: 'playstation-5-006',
+          name: 'PlayStation 5',
+          description: 'Consola de videojuegos de nueva generación con soporte 4K',
+          basePrice: 12499.0,
+          category: 'Electrónica',
+          createdAt: DateTime.now().subtract(const Duration(days: 1)),
+          updatedAt: DateTime.now().subtract(const Duration(days: 1)),
+          projectId: 'demo-project',
+        ),
+      ];
+      notifyListeners();
+    }
   }
 }
