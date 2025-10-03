@@ -4,6 +4,7 @@ import '../../services/firebase_service.dart';
 import '../../services/auth_service.dart';
 import '../../models/project.dart';
 import '../../providers/settings_provider.dart';
+import '../../core/widgets/gradient_app_bar.dart';
 
 class ManagementScreen extends StatefulWidget {
   const ManagementScreen({super.key});
@@ -38,8 +39,8 @@ class _ManagementScreenState extends State<ManagementScreen> {
     //final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Administración de Proyectos'),
+      appBar: GradientAppBar(
+        title: 'Administración de Proyectos',
         actions: [
           IconButton(
             icon: const Icon(Icons.add),

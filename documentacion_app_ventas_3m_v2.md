@@ -1406,7 +1406,7 @@ lib/
 #### Semana 15-16: Administración de Proyectos
 - [ ] Implementar gestión de miembros del proyecto
 - [ ] Crear configuración específica por proyecto
-- [ ] Desarrollar pantalla de administración del proyecto
+- [X] Desarrollar pantalla de administración del proyecto
 - [ ] Implementar roles básicos por proyecto
 - [ ] Crear sistema de invitaciones a proyectos
 - [ ] Desarrollar backup básico por proyecto
@@ -1414,8 +1414,8 @@ lib/
 ### Fase 4: Funcionalidades de Ventas (6 semanas)
 
 #### Semana 17-19: Gestión de Productos
-- [ ] Implementar modelo de datos Product
-- [ ] Crear pantalla de gestión de productos
+- [X] Implementar modelo de datos Product
+- [X] Crear pantalla de gestión de productos
 - [ ] Desarrollar formulario de añadir/editar productos
 - [ ] Implementar control de stock básico
 - [ ] Crear categorías de productos
@@ -1423,7 +1423,7 @@ lib/
 
 #### Semana 20-22: Sistema de Ventas
 - [ ] Implementar modelo de datos Sale
-- [ ] Crear pantalla de registro de ventas
+- [X] Crear pantalla de registro de ventas
 - [ ] Desarrollar formulario de nueva venta
 - [ ] Implementar cálculo automático de beneficios
 - [ ] Crear sistema de deudas básico

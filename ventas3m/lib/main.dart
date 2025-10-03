@@ -6,6 +6,8 @@ import 'firebase_options.dart';
 import 'providers/settings_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/auth_provider.dart';
+import 'providers/sales_provider.dart';
+import 'providers/products_provider.dart';
 import 'core/theme/responsive_theme.dart';
 import 'widgets/auth_wrapper.dart';
 import 'router/app_router.dart';
@@ -26,6 +28,15 @@ Future<void> main() async {
           // Conectar con SettingsProvider para sincronización
           themeProvider.setSettingsProvider(context.read<SettingsProvider>());
           return themeProvider;
+        }),
+        // SalesProvider para gestionar las ventas
+        ChangeNotifierProvider(create: (_) => SalesProvider()),
+        ChangeNotifierProvider(create: (context) {
+          final productProvider = ProductsProvider();
+          // Conectar con SettingsProvider para sincronización
+          productProvider.setSettingsProvider(context.read<SettingsProvider>());
+          productProvider.loadProducts(); //cargar productos al iniciar
+          return productProvider;
         }),
         // AuthProvider va último ya que puede necesitar acceso a otros providers
         ChangeNotifierProvider(create: (_) => AuthProvider()),
