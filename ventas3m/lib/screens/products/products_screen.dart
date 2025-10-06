@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/products_provider.dart';
+import '../../providers/product_stock_provider.dart';
 import '../../models/product.dart';
 import '../../core/widgets/gradient_app_bar.dart';
 import '../../router/app_router.dart';
 import 'add_product_modal.dart';
+import 'add_stock_modal.dart';
 
 class ProductsScreen extends StatefulWidget {
   const ProductsScreen({super.key});
@@ -124,6 +126,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                            onTap: () {
                              // TODO: Implementar edición de producto
                            },
+                           onAddStock: () => _showAddStockModal(product.id, product.name),
                          );
                        },
                      );
@@ -230,89 +233,246 @@ class _ProductsScreenState extends State<ProductsScreen> {
       });
     }
   }
+
+  void _showAddStockModal(String productId, String productName) async {
+    final result = await showModalBottomSheet<Map<String, dynamic>>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return Container(
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: AddStockModal(
+            productId: productId,
+            productName: productName,
+          ),
+        );
+      },
+    );
+
+    if (result != null && mounted) {
+
+      // Crear objeto ProductStock desde los datos del formulario
+      final newStock = ProductStock(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        productId: result['productId'] as String,
+        quantity: result['quantity'] as int,
+        responsibleId: result['responsibleId'] as String,
+        providerId: result['providerId'] as String,
+        price: result['price'] as double,
+        purchaseDate: result['purchaseDate'] as DateTime,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        projectId: '', // Se establecerá después con el proyecto actual
+      );
+
+      // Usar addPostFrameCallback para evitar el error de setState durante el build
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          final stockProvider = Provider.of<ProductStockProvider>(context, listen: false);
+
+          try {
+            // Intentar añadir el stock
+            stockProvider.addStock(newStock);
+
+            // Si no hay error, mostrar snackbar de éxito y forzar actualización de UI
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted && stockProvider.error == null) {
+
+                // Forzar reconstrucción del estado para asegurar que la UI se actualice
+                setState(() {});
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Stock añadido exitosamente'),
+                    backgroundColor: Colors.green,
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+              }
+            });
+          } catch (e) {
+            // Si hay error, mostrar snackbar con el error del provider
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted && stockProvider.error != null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(stockProvider.error!),
+                    backgroundColor: Colors.red,
+                    duration: const Duration(seconds: 3),
+                  ),
+                );
+              }
+            });
+          }
+        }
+      });
+    }
+  }
 }
 
 // Widget personalizado para mostrar cada producto
-class ProductCard extends StatelessWidget {
+class ProductCard extends StatefulWidget {
   final Product product;
   final VoidCallback onTap;
+  final VoidCallback onAddStock;
 
   const ProductCard({
     super.key,
     required this.product,
     required this.onTap,
+    required this.onAddStock,
   });
+
+  @override
+  State<ProductCard> createState() => _ProductCardState();
+}
+
+class _ProductCardState extends State<ProductCard> {
+  bool _isExpanded = false;
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final stock = _getProductStock(product.id); // Obtener stock del producto
-    final stockStatus = _getStockStatus(stock);
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.3)
-                : Colors.black.withValues(alpha: 0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
+    return Dismissible(
+      key: Key(widget.product.id),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
+        decoration: BoxDecoration(
+          color: _getProductStock(widget.product.id) == 0 ? const Color(0xFFF44336) : Colors.grey,
           borderRadius: BorderRadius.circular(16),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                // Ícono del producto con colores variados
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: _getProductColor(product.name).withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    _getProductIcon(product.name),
-                    color: _getProductColor(product.name),
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 16),
-
-                // Información del producto
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+        ),
+        child: Icon(
+          _getProductStock(widget.product.id) == 0 ? Icons.delete : Icons.block,
+          color: Colors.white,
+          size: 30,
+        ),
+      ),
+      onDismissed: (direction) {
+        if (_getProductStock(widget.product.id) == 0) {
+          _showDeleteProductDialog();
+        }
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: isDark
+                  ? Colors.black.withValues(alpha: 0.3)
+                  : Colors.black.withValues(alpha: 0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(16),
+                onTap: () {
+                  setState(() {
+                    _isExpanded = !_isExpanded;
+                  });
+                },
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
                     children: [
-                      // Nombre del producto
-                      Text(
-                        product.name,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: isDark ? Colors.white : const Color(0xFF212121),
+                      // Ícono del producto con colores variados
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: _getProductColor(widget.product.name).withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          _getProductIcon(widget.product.name),
+                          color: _getProductColor(widget.product.name),
+                          size: 24,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(width: 16),
 
-                      // SKU y Stock
-                      Row(
+                      // Información del producto
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Nombre del producto
+                            Text(
+                              widget.product.name,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? Colors.white : const Color(0xFF212121),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+
+                            // SKU y Stock
+                            Row(
+                              children: [
+                                Text(
+                                  'SKU: ${widget.product.id.substring(0, 8).toUpperCase()}',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: isDark ? Colors.grey[400] : Colors.grey[600],
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Icon(
+                                  _isExpanded ? Icons.expand_less : Icons.expand_more,
+                                  size: 16,
+                                  color: isDark ? Colors.grey[400] : Colors.grey[600],
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // Precio y estado de stock
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
+                          // Precio
                           Text(
-                            'SKU: ${product.id.substring(0, 8).toUpperCase()} • Stock: $stock',
+                            '\$${widget.product.basePrice.toStringAsFixed(2)}',
                             style: TextStyle(
-                              fontSize: 12,
-                              color: isDark ? Colors.grey[400] : Colors.grey[600],
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: isDark ? const Color(0xFF4CAF50) : const Color(0xFF2E7D32),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+
+                          // Estado de stock
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: _getStockStatusColor(_getStockStatus(_getProductStock(widget.product.id)), isDark),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              _getStockStatusText(_getStockStatus(_getProductStock(widget.product.id))),
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.white,
+                              ),
                             ),
                           ),
                         ],
@@ -320,46 +480,199 @@ class ProductCard extends StatelessWidget {
                     ],
                   ),
                 ),
+              ),
+            ),
 
-                // Precio y estado de stock
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    // Precio
-                    Text(
-                      '\$${product.basePrice.toStringAsFixed(2)}',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: isDark ? const Color(0xFF4CAF50) : const Color(0xFF2E7D32),
+            // Contenido expandido con cards de stock
+            if (_isExpanded)
+              Container(
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF2A2A2A) : Colors.grey[50],
+                  borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Título de stocks
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Stocks Disponibles',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? Colors.white : const Color(0xFF212121),
+                            ),
+                          ),
+                          Text(
+                            '${_getProductStock(widget.product.id)} unidades',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: isDark ? Colors.grey[400] : Colors.grey[600],
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: 8),
+                      const SizedBox(height: 12),
 
-                    // Estado de stock
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: _getStockStatusColor(stockStatus, isDark),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        _getStockStatusText(stockStatus),
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w500,
-                          color: _getStockStatusTextColor(stockStatus, isDark),
+                      // Cards de stock individuales
+                      ..._getStockCards(),
+
+                      // Botón para añadir stock
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: widget.onAddStock,
+                          icon: const Icon(Icons.add, size: 18),
+                          label: const Text('Añadir Stock'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF42A5F5),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ],
-            ),
-          ),
+              ),
+          ],
         ),
       ),
     );
+  }
+
+  List<Widget> _getStockCards() {
+    final stockProvider = Provider.of<ProductStockProvider>(context, listen: true);
+    final stocks = stockProvider.getStocksForProduct(widget.product.id);
+
+    if (stocks == null || stocks.isEmpty) {
+      return [
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF333333)
+                : Colors.grey[100],
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.info_outline,
+                size: 20,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.grey[400]
+                    : Colors.grey[600],
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'No hay stocks registrados',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.grey[400]
+                      : Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ];
+    }
+
+    return stocks.map((stock) {
+      return Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFF333333)
+              : Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.grey[600]!
+                : Colors.grey[300]!,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: const Color(0xFF42A5F5).withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: const Icon(
+                Icons.inventory,
+                color: Color(0xFF1976D2),
+                size: 16,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Cantidad: ${stock.quantity} • \$${stock.price.toStringAsFixed(2)}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white
+                          : const Color(0xFF212121),
+                    ),
+                  ),
+                  Text(
+                    'Responsable: ${stock.responsibleId}',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.grey[400]
+                          : Colors.grey[600],
+                    ),
+                  ),
+                  Text(
+                    'Proveedor: ${stock.providerId}',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.grey[400]
+                          : Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: _getStockStatusColor(_getStockStatus(stock.quantity), Theme.of(context).brightness == Brightness.dark),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                _getStockStatusText(_getStockStatus(stock.quantity)),
+                style: const TextStyle(
+                  fontSize: 8,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }).toList();
   }
 
   // Método para obtener el color del ícono según el nombre del producto
@@ -401,26 +714,11 @@ class ProductCard extends StatelessWidget {
     }
   }
 
-  // Método para obtener el stock del producto (simulado por ahora)
+  // Método para obtener el stock del producto desde el provider
   int _getProductStock(String productId) {
-    // Simulación de stock - en producción esto vendría de ProductStock
-    final stocks = {
-      'laptop': 12,
-      'iphone': 8,
-      'audifono': 3,
-      'ipad': 15,
-      'camara': 0,
-      'playstation': 6,
-    };
-
-    // Buscar por nombre del producto para simular stock
-    for (final entry in stocks.entries) {
-      if (productId.toLowerCase().contains(entry.key)) {
-        return entry.value;
-      }
-    }
-
-    return 5; // Stock por defecto
+    final stockProvider = Provider.of<ProductStockProvider>(context, listen: true);
+    final stock = stockProvider.getTotalStockForProduct(productId);
+    return stock;
   }
 
   // Método para obtener el estado del stock
@@ -458,8 +756,63 @@ class ProductCard extends StatelessWidget {
     }
   }
 
-  // Método para obtener el color del texto del estado de stock
-  Color _getStockStatusTextColor(String status, bool isDark) {
-    return Colors.white;
+  // Método para mostrar diálogo de confirmación de eliminación
+  void _showDeleteProductDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Eliminar Producto'),
+          content: Text('¿Estás seguro de que quieres eliminar el producto "${widget.product.name}"? Esta acción no se puede deshacer.'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Cerrar diálogo
+              },
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Cerrar diálogo
+                _deleteProduct(); // Proceder con la eliminación
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.red,
+              ),
+              child: const Text('Eliminar'),
+            ),
+          ],
+        );
+      },
+    );
   }
+
+  // Método para eliminar el producto
+  void _deleteProduct() {
+    final productsProvider = Provider.of<ProductsProvider>(context, listen: false);
+
+    try {
+      // Eliminar el producto
+      productsProvider.removeProduct(widget.product.id);
+
+      // Mostrar mensaje de éxito
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Producto "${widget.product.name}" eliminado exitosamente'),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
+      // Mostrar mensaje de error
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al eliminar el producto: ${productsProvider.error ?? e.toString()}'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
 }

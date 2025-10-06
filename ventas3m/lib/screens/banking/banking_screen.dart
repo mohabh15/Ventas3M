@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../core/widgets/gradient_app_bar.dart';
-import '../../core/theme/colors.dart';
 
 class BankingScreen extends StatefulWidget {
   const BankingScreen({super.key});
@@ -12,9 +11,7 @@ class BankingScreen extends StatefulWidget {
 class _BankingScreenState extends State<BankingScreen> {
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final colors = isDark ? AppDarkColors : AppColors;
+    // Theme disponible a través de context cuando sea necesario
 
     // Calcular la altura de la barra de navegación inferior
     final bottomPadding = MediaQuery.of(context).padding.bottom;

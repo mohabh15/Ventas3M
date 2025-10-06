@@ -1418,7 +1418,7 @@ lib/
 - [X] Crear pantalla de gestión de productos
 - [X] Desarrollar formulario de añadir
 - [ ] Desarrollar editar productos
-- [ ] Implementar control de stock
+- [X] Implementar control de stock
 - [ ] Crear categorías de productos
 - [ ] Desarrollar búsqueda y filtros de productos
 
