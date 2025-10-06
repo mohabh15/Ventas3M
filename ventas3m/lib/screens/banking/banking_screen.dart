@@ -126,7 +126,7 @@ class _BankingScreenState extends State<BankingScreen> {
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(Icons.visibility_off, size: 14, color: Colors.white),
@@ -266,7 +266,7 @@ class _BankingScreenState extends State<BankingScreen> {
             subtitle,
             style: TextStyle(
               fontSize: 9,
-              color: Colors.white.withOpacity(0.8),
+              color: Colors.white.withValues(alpha: 0.8),
             ),
             overflow: TextOverflow.ellipsis,
           ),
@@ -509,7 +509,7 @@ class _BankingScreenState extends State<BankingScreen> {
           Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: iconColor.withOpacity(0.1),
+              color: iconColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(6),
             ),
             child: Icon(icon, color: iconColor, size: 18),

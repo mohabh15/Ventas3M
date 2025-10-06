@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../providers/products_provider.dart';
 import '../../models/product.dart';
 import '../../core/widgets/gradient_app_bar.dart';
+import '../../router/app_router.dart';
 import 'add_product_modal.dart';
 
 class ProductsScreen extends StatefulWidget {
@@ -55,21 +56,27 @@ class _ProductsScreenState extends State<ProductsScreen> {
                             const Icon(
                               Icons.error_outline,
                               size: 80,
-                              color: Colors.red,
+                              color: Colors.grey,
                             ),
                             const SizedBox(height: 16),
                             Text(
                               error,
                               style: const TextStyle(
                                 fontSize: 16,
-                                color: Colors.red,
+                                color: Colors.grey,
                               ),
                               textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: 16),
                             ElevatedButton(
-                              onPressed: () => productsProvider.loadProducts(),
-                              child: const Text('Reintentar'),
+                              onPressed: () {
+                                if (error == 'No hay proyecto seleccionado') {
+                                  Navigator.pushNamed(context, AppRouter.settings);
+                                } else {
+                                  productsProvider.loadProducts();
+                                }
+                              },
+                              child: Text(error == 'No hay proyecto seleccionado' ? 'Selecciona uno' : 'Reintentar'),
                             ),
                           ],
                         ),
