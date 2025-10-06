@@ -47,7 +47,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Calcular la altura de la barra de navegación inferior
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+
     return Scaffold(
+      extendBody: true, // Permite que el contenido pase debajo de la barra inferior
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? Colors.black
+          : Theme.of(context).colorScheme.surface.withValues(alpha: 0.95),
       appBar: GradientAppBar(
         title: 'Dashboard',
         actions: [
@@ -63,8 +70,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ],
       ),
       body: SafeArea(
+          top: true, // Mantenemos el padding superior para el AppBar
+          bottom: false, // Removemos el padding inferior para permitir extensión debajo de la navbar
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
+            padding: EdgeInsets.only(
+              top: 16.0,
+              left: 16.0,
+              right: 16.0,
+              bottom: bottomPadding + 100.0, // Padding adecuado considerando la navbar inferior
+            ),
             child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

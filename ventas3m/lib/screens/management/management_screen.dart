@@ -38,6 +38,9 @@ class _ManagementScreenState extends State<ManagementScreen> {
   Widget build(BuildContext context) {
     //final theme = Theme.of(context);
 
+    // Calcular la altura de la barra de navegación inferior
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+
     return Scaffold(
       appBar: GradientAppBar(
         title: 'Administración de Proyectos',
@@ -49,82 +52,115 @@ class _ManagementScreenState extends State<ManagementScreen> {
           ),
         ],
       ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: _isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : _projects.isEmpty
-                        ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Text(
-                                  'No tienes proyectos. Crea tu primer proyecto.',
-                                  style: TextStyle(fontSize: 18),
-                                  textAlign: TextAlign.center,
+      body: Stack(
+        children: [
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: _isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : _projects.isEmpty
+                            ? Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Text(
+                                      'No tienes proyectos. Crea tu primer proyecto.',
+                                      style: TextStyle(fontSize: 18),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    ElevatedButton(
+                                      onPressed: _showCreateProjectDialog,
+                                      child: const Text('Crear Proyecto'),
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(height: 16),
-                                ElevatedButton(
-                                  onPressed: _showCreateProjectDialog,
-                                  child: const Text('Crear Proyecto'),
-                                ),
-                              ],
-                            ),
-                          )
-                        : ListView.builder(
-                            itemCount: _projects.length,
-                            itemBuilder: (context, index) {
-                              final project = _projects[index];
-                              return Card(
-                                elevation: 4,
-                                margin: const EdgeInsets.symmetric(vertical: 8),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(16.0),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        project.name,
-                                        style: const TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Text(project.description),
-                                      const SizedBox(height: 16),
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.end,
+                              )
+                            : ListView.builder(
+                                itemCount: _projects.length,
+                                itemBuilder: (context, index) {
+                                  final project = _projects[index];
+                                  return Card(
+                                    elevation: 4,
+                                    margin: const EdgeInsets.symmetric(vertical: 8),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(16.0),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          IconButton(
-                                            icon: const Icon(Icons.edit),
-                                            onPressed: () => _showEditProjectDialog(project),
+                                          Text(
+                                            project.name,
+                                            style: const TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                           ),
-                                          IconButton(
-                                            icon: const Icon(Icons.delete),
-                                            onPressed: () => _deleteProject(project.id),
-                                          ),
-                                          IconButton(
-                                            icon: const Icon(Icons.people),
-                                            onPressed: () => _showManageUsersDialog(project),
+                                          const SizedBox(height: 8),
+                                          Text(project.description),
+                                          const SizedBox(height: 16),
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.end,
+                                            children: [
+                                              IconButton(
+                                                icon: const Icon(Icons.edit),
+                                                onPressed: () => _showEditProjectDialog(project),
+                                              ),
+                                              IconButton(
+                                                icon: const Icon(Icons.delete),
+                                                onPressed: () => _deleteProject(project.id),
+                                              ),
+                                              IconButton(
+                                                icon: const Icon(Icons.people),
+                                                onPressed: () => _showManageUsersDialog(project),
+                                              ),
+                                            ],
                                           ),
                                         ],
                                       ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
+                                    ),
+                                  );
+                                },
+                              ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
+
+          // Botón flotante posicionado relativo a la navbar
+          Positioned(
+            right: 16.0,
+            bottom: bottomPadding + 16.0,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Color(0xFF0D47A1), // Azul oscuro
+                    Color(0xFF1976D2), // Azul primario
+                    Color(0xFF42A5F5), // Azul claro
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                shape: BoxShape.circle,
+              ),
+              child: FloatingActionButton(
+                heroTag: 'management_fab',
+                onPressed: () {
+                  // TODO: Implementar navegación a pantalla de agregar proyecto
+                },
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                child: const Icon(Icons.add, color: Colors.white),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
