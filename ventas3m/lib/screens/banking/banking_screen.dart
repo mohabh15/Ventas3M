@@ -537,9 +537,9 @@ class _BankingScreenState extends State<BankingScreen> {
                     Navigator.pushNamed(context, AppRouter.teamBalance);
                   },
                   child: Text(
-                    'Ver todo',
+                    '>',
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 24,
                       color: Theme.of(context).brightness == Brightness.dark
                           ? Color(0xFF2196F3) // Azul primario en modo oscuro
                           : Theme.of(context).primaryColor,
@@ -607,9 +607,9 @@ class _BankingScreenState extends State<BankingScreen> {
                     Navigator.pushNamed(context, AppRouter.teamBalance);
                   },
                   child: Text(
-                    'Ver todo',
+                    '>',
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 24,
                       color: Theme.of(context).brightness == Brightness.dark
                           ? Color(0xFF2196F3) // Azul primario en modo oscuro
                           : Theme.of(context).primaryColor,
@@ -659,9 +659,9 @@ class _BankingScreenState extends State<BankingScreen> {
                   Navigator.pushNamed(context, AppRouter.teamBalance);
                 },
                 child: Text(
-                  'Ver todo',
+                  '>',
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 24,
                     color: Theme.of(context).brightness == Brightness.dark
                         ? Color(0xFF2196F3) // Azul primario en modo oscuro
                         : Theme.of(context).primaryColor,
@@ -808,9 +808,9 @@ class _BankingScreenState extends State<BankingScreen> {
                   Navigator.pushNamed(context, AppRouter.expenses);
                 },
                 child: Text(
-                  'Ver todo',
+                  '>',
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 24,
                     color: Theme.of(context).brightness == Brightness.dark
                         ? Color(0xFF2196F3) // Azul primario en modo oscuro
                         : Theme.of(context).primaryColor,
@@ -850,9 +850,9 @@ class _BankingScreenState extends State<BankingScreen> {
                   Navigator.pushNamed(context, '/debt-management');
                 },
                 child: Text(
-                  'Ver todo',
+                  '>',
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 24,
                     color: Theme.of(context).brightness == Brightness.dark
                         ? Color(0xFF2196F3) // Azul primario en modo oscuro
                         : Theme.of(context).primaryColor,

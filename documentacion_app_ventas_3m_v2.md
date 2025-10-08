@@ -1340,22 +1340,21 @@ lib/
 - [X] Setup de estructura de carpetas modular
 - [X] Configuración de dependencias base (pubspec.yaml)
 - [X] Configuración de assets (fuentes, iconos, imágenes)
-- [ ] Setup básico de Git y control de versiones
+- [X] Setup básico de Git y control de versiones
 
 #### Semana 2: Configuración Base del Proyecto
 - [X] Implementar configuración de tema base
 - [X] Crear estructura de navegación básica
 - [X] Configurar providers base (Theme, Auth, Settings)
-- [ ] Implementar pantalla de splash screen
 - [X] Configurar Firebase services básicos
-- [ ] Setup inicial de CI/CD
+
 
 ### Fase 1: UI Básica y Navegación (4 semanas)
 
 #### Semana 3-4: Sistema de Diseño Base
 - [X] Implementar tema personalizado Material Design 3
 - [X] Crear paleta de colores y tipografía personalizada
-- [ ] Desarrollar widgets base reutilizables
+- [X] Desarrollar widgets base reutilizables
 - [X] Implementar modo oscuro/claro dinámico
 - [X] Crear sistema de componentes UI (botones, cards, inputs)
 - [X] Configurar diseño responsivo
@@ -1363,54 +1362,28 @@ lib/
 #### Semana 5-6: Navegación y Layout
 - [X] Implementar Bottom Navigation Bar
 - [X] Desarrollar sistema de rutas nombradas
-- [ ] Implementar transiciones de navegación suaves
-- [ ] Crear layout base para todas las pantallas
-- [ ] Configurar deep linking básico
+- [X] Crear layout base para todas las pantallas
+
 
 #### Semana 7-8: Pantallas Esenciales
 - [X] Desarrollar pantalla de Login moderna
-- [ ] Crear pantalla de Dashboard con layout responsivo
-- [ ] Implementar pantalla de Perfil de usuario
-- [ ] Desarrollar pantalla de Configuración básica
-- [ ] Crear placeholders para futuras funcionalidades
-- [ ] Implementar manejo de estados de carga
-
-### Fase 2: Autenticación y Gestión de Usuarios (3 semanas)
-
-#### Semana 9-10: Sistema de Autenticación
-- [X] Implementar Firebase Authentication Google
-- [X] Crear flujo de registro y login seguro
-- [ ] Desarrollar recuperación de contraseñas
-- [X] Implementar manejo de sesiones y tokens
-- [X] Crear middleware de autenticación
-- [ ] Desarrollar validación de formularios
-
-#### Semana 11-12: Gestión de Usuarios
-- [ ] Implementar gestión de perfiles de usuario
-- [ ] Crear sistema de configuración de usuario
-- [ ] Desarrollar pantalla de gestión de cuenta
-- [ ] Implementar notificaciones push básicas
-- [ ] Crear sistema de preferencias de usuario
-- [X] Desarrollar logout y manejo de sesiones
+- [X] Crear pantalla de Dashboard con layout responsivo
+- [X] Implementar pantalla de Perfil de usuario
+- [X] Desarrollar pantalla de Configuración básica
+- [X] Crear placeholders para futuras funcionalidades
+- [X] Implementar manejo de estados de carga
 
 ### Fase 3: Gestión de Proyectos (3 semanas)
+
+### Fase 2: Autenticación y Gestión de Usuarios (3 semanas)
 
 #### Semana 13-14: Creación de Proyectos
 - [X] Implementar modelo de datos Project
 - [X] Crear pantalla de creación de proyectos
 - [X] Desarrollar configuración inicial de proyecto
 - [X] Implementar selector de proyecto
-- [ ] Crear aislamiento básico de datos por proyecto
+- [X] Crear aislamiento básico de datos por proyecto
 - [X] Desarrollar navegación entre proyectos
-
-#### Semana 15-16: Administración de Proyectos
-- [ ] Implementar gestión de miembros del proyecto
-- [ ] Crear configuración específica por proyecto
-- [X] Desarrollar pantalla de administración del proyecto
-- [ ] Implementar roles básicos por proyecto
-- [ ] Crear sistema de invitaciones a proyectos
-- [ ] Desarrollar backup básico por proyecto
-- [ ] Desarollar gestion de los proveedores del proyecto
 
 ### Fase 4: Funcionalidades de Ventas (6 semanas)
 
@@ -1418,10 +1391,9 @@ lib/
 - [X] Implementar modelo de datos Product
 - [X] Crear pantalla de gestión de productos
 - [X] Desarrollar formulario de añadir
-- [ ] Desarrollar editar productos
+- [X] Desarrollar editar productos
 - [X] Implementar control de stock
-- [ ] Crear categorías de productos
-- [ ] Desarrollar búsqueda y filtros de productos
+
 
 #### Semana 20-22: Sistema de Ventas
 - [X] Implementar modelo de datos Sale
@@ -1437,8 +1409,34 @@ lib/
 - [X] Implementar categorización de gastos
 - [X] Crear sistema de deudas 
 
+#### Semana 9-10: Sistema de Autenticación
+- [X] Implementar Firebase Authentication Google
+- [X] Crear flujo de registro y login seguro
+- [X] Implementar manejo de sesiones y tokens
+- [X] Crear middleware de autenticación
+- [X] Desarrollar validación de formularios
+- [ ] Desarrollar recuperación de contraseñas
+- [ ] Implementar pantalla de splash screen
+- [ ] Setup inicial de CI/CD
+- [ ] Implementar transiciones de navegación suaves
+- [ ] Configurar deep linking básico
 
-### Fase 5: Integración y Testing (4 semanas)
+#### Semana 11-12: Gestión de Usuarios
+- [X] Desarrollar logout y manejo de sesiones
+- [ ] Implementar gestión de perfiles de usuario
+- [ ] Crear sistema de configuración de usuario
+- [ ] Desarrollar pantalla de gestión de cuenta
+- [ ] Implementar notificaciones push básicas
+- [ ] Crear sistema de preferencias de usuario
+
+#### Semana 15-16: Administración de Proyectos
+- [ ] Implementar gestión de miembros del proyecto
+- [ ] Crear configuración específica por proyecto
+- [X] Desarrollar pantalla de administración del proyecto
+- [ ] Implementar roles básicos por proyecto
+- [ ] Crear sistema de invitaciones a proyectos
+- [ ] Desarrollar backup básico por proyecto
+- [ ] Desarollar gestion de los proveedores del proyecto
 
 #### Semana 25-26: Integración Completa
 - [ ] Crear reportes financieros básicos
@@ -1446,6 +1444,8 @@ lib/
 - [ ] Desarrollar manejo de errores global
 - [ ] Implementar sistema de notificaciones
 - [ ] Crear calendario de eventos básico
+- [ ] Crear categorías de productos
+- [ ] Desarrollar búsqueda y filtros de productos
 
 #### Semana 27-28: Testing y Optimización
 - [ ] Realizar pruebas de integración

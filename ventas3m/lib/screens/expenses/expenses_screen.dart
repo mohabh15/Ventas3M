@@ -12,6 +12,7 @@ import '../../core/widgets/gradient_app_bar.dart';
 import '../../services/firebase_service.dart';
 import '../../services/formatting_service.dart';
 import 'add_edit_expense_modal.dart';
+import 'expense_details_modal.dart';
 
 class ExpensesScreen extends StatefulWidget {
   const ExpensesScreen({super.key});
@@ -726,9 +727,11 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   }
 
   void _showExpenseDetails(Expense expense) {
-    // TODO: Implementar modal de detalles de gasto
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Detalles de: ${expense.description}')),
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => ExpenseDetailsModal(expense: expense),
     );
   }
 

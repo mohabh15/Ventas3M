@@ -24,6 +24,15 @@ class _TeamBalanceScreenState extends State<TeamBalanceScreen> {
   Project? _currentProject;
   bool _isLoading = true;
   String? _errorMessage;
+  late SettingsProvider _settingsProvider;
+  late AuthProvider _authProvider;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
+    _authProvider = Provider.of<AuthProvider>(context, listen: false);
+  }
 
   @override
   void initState() {
@@ -34,15 +43,13 @@ class _TeamBalanceScreenState extends State<TeamBalanceScreen> {
       _loadTeamBalances();
 
       // Escuchar cambios en el proyecto activo
-      final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
-      settingsProvider.addListener(_onProjectChanged);
+      _settingsProvider.addListener(_onProjectChanged);
     });
   }
 
   @override
   void dispose() {
-    final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
-    settingsProvider.removeListener(_onProjectChanged);
+    _settingsProvider.removeListener(_onProjectChanged);
     super.dispose();
   }
 
@@ -57,8 +64,7 @@ class _TeamBalanceScreenState extends State<TeamBalanceScreen> {
     });
 
     try {
-      final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
-      final projectId = settingsProvider.activeProjectId;
+      final projectId = _settingsProvider.activeProjectId;
 
       if (projectId == null) {
         setState(() {
@@ -112,8 +118,7 @@ class _TeamBalanceScreenState extends State<TeamBalanceScreen> {
 
   Future<void> _createInitialBalances() async {
     try {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final currentUser = authProvider.currentUser;
+      final currentUser = _authProvider.currentUser;
 
       if (currentUser == null || _currentProject == null) return;
 
@@ -151,8 +156,7 @@ class _TeamBalanceScreenState extends State<TeamBalanceScreen> {
 
   String _getMemberName(String email) {
     // Si es el usuario actual, usar su nombre real
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final currentUser = authProvider.currentUser;
+    final currentUser = _authProvider.currentUser;
 
     if (currentUser != null && currentUser.email == email) {
       return currentUser.name;
@@ -165,8 +169,7 @@ class _TeamBalanceScreenState extends State<TeamBalanceScreen> {
 
   String _getMemberRole(String email) {
     // Si es el usuario actual, intentar determinar su rol
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final currentUser = authProvider.currentUser;
+    final currentUser = _authProvider.currentUser;
 
     if (currentUser != null && currentUser.email == email) {
       // Aquí podrías implementar lógica para determinar el rol del usuario
