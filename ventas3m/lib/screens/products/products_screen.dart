@@ -7,6 +7,7 @@ import '../../core/widgets/gradient_app_bar.dart';
 import '../../router/app_router.dart';
 import 'add_product_modal.dart';
 import 'add_stock_modal.dart';
+import 'edit_product_modal.dart';
 
 class ProductsScreen extends StatefulWidget {
   const ProductsScreen({super.key});
@@ -123,10 +124,9 @@ class _ProductsScreenState extends State<ProductsScreen> {
                          final product = products[index];
                          return ProductCard(
                            product: product,
-                           onTap: () {
-                             // TODO: Implementar edición de producto
-                           },
+                           onTap: () {},
                            onAddStock: () => _showAddStockModal(product.id, product.name),
+                           onEdit: () => _showEditProductModal(product),
                          );
                        },
                      );
@@ -313,6 +313,76 @@ class _ProductsScreenState extends State<ProductsScreen> {
       });
     }
   }
+
+  void _showEditProductModal(Product product) async {
+    final result = await showModalBottomSheet<Map<String, dynamic>>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return Container(
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: EditProductModal(product: product),
+        );
+      },
+    );
+
+    if (result != null && mounted) {
+      // Crear objeto Product actualizado desde los datos del formulario
+      final updatedProduct = Product(
+        id: result['id'] as String,
+        name: result['name'] as String,
+        description: result['description'] as String,
+        basePrice: result['basePrice'] as double,
+        category: result['category'] as String,
+        createdAt: product.createdAt,
+        updatedAt: DateTime.now(),
+        projectId: product.projectId,
+      );
+
+      // Usar addPostFrameCallback para evitar el error de setState durante el build
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          final productsProvider = Provider.of<ProductsProvider>(context, listen: false);
+
+          try {
+            // Intentar actualizar el producto
+            productsProvider.updateProduct(updatedProduct);
+
+            // Si no hay error, mostrar snackbar de éxito
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted && productsProvider.error == null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Producto ${updatedProduct.name} actualizado exitosamente'),
+                    backgroundColor: Colors.green,
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+              }
+            });
+          } catch (e) {
+            // Si hay error, mostrar snackbar con el error del provider
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted && productsProvider.error != null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(productsProvider.error!),
+                    backgroundColor: Colors.red,
+                    duration: const Duration(seconds: 3),
+                  ),
+                );
+              }
+            });
+          }
+        }
+      });
+    }
+  }
 }
 
 // Widget personalizado para mostrar cada producto
@@ -320,12 +390,14 @@ class ProductCard extends StatefulWidget {
   final Product product;
   final VoidCallback onTap;
   final VoidCallback onAddStock;
+  final VoidCallback onEdit;
 
   const ProductCard({
     super.key,
     required this.product,
     required this.onTap,
     required this.onAddStock,
+    required this.onEdit,
   });
 
   @override
@@ -341,22 +413,56 @@ class _ProductCardState extends State<ProductCard> {
 
     return Dismissible(
       key: Key(widget.product.id),
-      direction: DismissDirection.endToStart,
+      direction: DismissDirection.horizontal,
       background: Container(
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
+        alignment: Alignment.centerLeft,
+        padding: const EdgeInsets.only(left: 20),
         decoration: BoxDecoration(
-          color: _getProductStock(widget.product.id) == 0 ? const Color(0xFFF44336) : Colors.grey,
+          color: const Color(0xFFF44336),
           borderRadius: BorderRadius.circular(16),
         ),
-        child: Icon(
-          _getProductStock(widget.product.id) == 0 ? Icons.delete : Icons.block,
+        child: const Icon(
+          Icons.delete,
           color: Colors.white,
           size: 30,
         ),
       ),
+      secondaryBackground: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
+        decoration: BoxDecoration(
+          color: Colors.blue,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: const Icon(
+          Icons.edit,
+          color: Colors.white,
+          size: 30,
+        ),
+      ),
+      confirmDismiss: (direction) async {
+        if (direction == DismissDirection.endToStart) {
+          widget.onEdit();
+          return false;
+        } else if (direction == DismissDirection.startToEnd) {
+          final stockProvider = Provider.of<ProductStockProvider>(context, listen: false);
+          final totalStock = stockProvider.getTotalStockForProduct(widget.product.id);
+          if (totalStock > 0) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('No se puede eliminar el producto porque aún hay stock'),
+                backgroundColor: Colors.orange,
+                duration: const Duration(seconds: 2),
+              ),
+            );
+            return false;
+          }
+          return true;
+        }
+        return false;
+      },
       onDismissed: (direction) {
-        if (_getProductStock(widget.product.id) == 0) {
+        if (direction == DismissDirection.startToEnd) {
           _showDeleteProductDialog();
         }
       },

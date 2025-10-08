@@ -1436,15 +1436,13 @@ lib/
 - [X] Desarrollar formulario de registro de gastos
 - [X] Implementar categorización de gastos
 - [X] Crear sistema de deudas 
-- [ ] Crear reportes financieros básicos
-- [ ] Desarrollar KPIs iniciales
+
 
 ### Fase 5: Integración y Testing (4 semanas)
 
 #### Semana 25-26: Integración Completa
-- [ ] Integrar todas las funcionalidades desarrolladas
-- [ ] Implementar navegación unificada
-- [ ] Crear flujos de usuario completos
+- [ ] Crear reportes financieros básicos
+- [ ] Desarrollar KPIs iniciales
 - [ ] Desarrollar manejo de errores global
 - [ ] Implementar sistema de notificaciones
 - [ ] Crear calendario de eventos básico
@@ -1479,9 +1477,7 @@ lib/
 
 Pendientes
 
-- arreglar error de ui/logica al eliminar producto
 - añadir gestion de proyecto: proveedores... -> añadir la funcionalidad de guardar los proveedores
-- Cambiar colores ui card ventas igual card productos
 - añadir boton + en linea con miembros del equipo (balances) para añadir cuenta balances
 
 

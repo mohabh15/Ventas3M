@@ -947,19 +947,21 @@ class _DebtManagementScreenState extends State<DebtManagementScreen> {
           ),
           ElevatedButton(
             onPressed: () async {
+              // Obtener el debtProvider fuera del contexto del callback asíncrono
+              final debtProvider = Provider.of<DebtProvider>(context, listen: false);
+
               try {
-                final debtProvider = Provider.of<DebtProvider>(context, listen: false);
                 await debtProvider.deleteDebt(debt.id);
                 if (mounted) {
-                  Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  Navigator.of(this.context).pop();
+                  ScaffoldMessenger.of(this.context).showSnackBar(
                     SnackBar(content: Text('Deuda "${debt.description}" eliminada')),
                   );
                 }
               } catch (e) {
                 if (mounted) {
-                  Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  Navigator.of(this.context).pop();
+                  ScaffoldMessenger.of(this.context).showSnackBar(
                     SnackBar(
                       content: Text('Error al eliminar deuda: $e'),
                       backgroundColor: Colors.red,

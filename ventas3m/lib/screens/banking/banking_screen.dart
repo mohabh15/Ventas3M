@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/widgets/gradient_app_bar.dart';
 import '../../router/app_router.dart';
-import '../../core/theme/colors.dart';
 import '../../providers/expense_provider.dart';
 import '../../providers/team_balance_provider.dart';
 import '../../providers/settings_provider.dart';
@@ -58,7 +57,7 @@ class _BankingScreenState extends State<BankingScreen> {
     // Theme disponible a través de context cuando sea necesario
 
     // Calcular la altura de la barra de navegación inferior
-    final bottomPadding = MediaQuery.of(context).padding.bottom;
+    //final bottomPadding = MediaQuery.of(context).padding.bottom;
 
     return Scaffold(
       appBar: GradientAppBar(
@@ -413,8 +412,8 @@ class _BankingScreenState extends State<BankingScreen> {
     final pendingCount = _debtProvider.pendingDebts.length;
 
     // Calcular total de todas las deudas del proyecto
-    final currentUserEmail = _authProvider.currentUser?.email ?? '';
-    final activeProjectId = _settingsProvider.activeProjectId ?? '';
+    //final currentUserEmail = _authProvider.currentUser?.email ?? '';
+    //final activeProjectId = _settingsProvider.activeProjectId ?? '';
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -679,7 +678,7 @@ class _BankingScreenState extends State<BankingScreen> {
               physics: const BouncingScrollPhysics(),
               children: teamBalances.take(3).map((member) {
                 // Calcular cambio porcentual (simulado por ahora)
-                final change = '+2.5%'; // TODO: Calcular cambio real basado en datos históricos
+                final change = '+3.5%'; // TODO: Calcular cambio real basado en datos históricos
 
                 // Asignar colores basados en el índice
                 final colors = [Colors.blue, Colors.green, Colors.purple, Colors.orange, Colors.teal];

@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import '../../core/theme/colors.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/gradient_app_bar.dart';
+import '../../core/widgets/loading_widget.dart';
 import '../../models/sale.dart';
-import '../../models/sale_status.dart';
-import '../../models/payment_method.dart';
+import '../../providers/sales_provider.dart';
+import '../../providers/settings_provider.dart';
 import '../settings/settings_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -16,63 +18,72 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  // Datos de ejemplo para ventas recientes
-  final List<Sale> recentSales = [
-    Sale(
-      id: 'VT-001234',
-      projectId: 'PROJ-001',
-      productId: 'Producto A',
-      sellerId: 'SELLER-001',
-      quantity: 2,
-      unitPrice: 122.50,
-      totalAmount: 245.00,
-      customerName: 'Ana García',
-      saleDate: DateTime.now().subtract(const Duration(hours: 2)),
-      profit: 49.00,
-      paymentMethod: PaymentMethod.cash,
-      status: SaleStatus.completed,
-      notes: '',
-      createdAt: DateTime.now().subtract(const Duration(hours: 2)),
-      updatedAt: DateTime.now().subtract(const Duration(hours: 2)),
-      createdBy: 'SELLER-001',
-    ),
-    Sale(
-      id: 'VT-001233',
-      projectId: 'PROJ-001',
-      productId: 'Producto B',
-      sellerId: 'SELLER-001',
-      quantity: 1,
-      unitPrice: 89.50,
-      totalAmount: 89.50,
-      customerName: 'Carlos Méndez',
-      saleDate: DateTime.now().subtract(const Duration(hours: 4)),
-      profit: 17.90,
-      paymentMethod: PaymentMethod.card,
-      status: SaleStatus.completed,
-      notes: '',
-      createdAt: DateTime.now().subtract(const Duration(hours: 4)),
-      updatedAt: DateTime.now().subtract(const Duration(hours: 4)),
-      createdBy: 'SELLER-001',
-    ),
-    Sale(
-      id: 'VT-001232',
-      projectId: 'PROJ-001',
-      productId: 'Producto C',
-      sellerId: 'SELLER-001',
-      quantity: 3,
-      unitPrice: 52.25,
-      totalAmount: 156.75,
-      customerName: 'María López',
-      saleDate: DateTime.now().subtract(const Duration(hours: 8)),
-      profit: 31.35,
-      paymentMethod: PaymentMethod.transfer,
-      status: SaleStatus.completed,
-      notes: '',
-      createdAt: DateTime.now().subtract(const Duration(hours: 8)),
-      updatedAt: DateTime.now().subtract(const Duration(hours: 8)),
-      createdBy: 'SELLER-001',
-    ),
-  ];
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Escuchar cambios en el proyecto activo pero no cargar datos automáticamente
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
+      settingsProvider.addListener(_onProjectChanged);
+    });
+  }
+
+  @override
+  void dispose() {
+    final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
+    settingsProvider.removeListener(_onProjectChanged);
+    super.dispose();
+  }
+
+  void _onProjectChanged() {
+    // No cargar datos automáticamente en cambios de proyecto
+    // Los datos se cargarán cuando el usuario interactúe con la pantalla
+  }
+
+  /// Carga datos de ventas solo cuando sea necesario (lazy loading)
+  Future<void> _ensureSalesDataLoaded() async {
+    final salesProvider = Provider.of<SalesProvider>(context, listen: false);
+    final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
+
+    final projectId = settingsProvider.activeProjectId;
+    if (projectId != null && !salesProvider.isDataLoadedForProject(projectId)) {
+      await _loadRecentSales();
+    }
+  }
+
+  Future<void> _loadRecentSales() async {
+    final salesProvider = Provider.of<SalesProvider>(context, listen: false);
+
+    // Prevenir múltiples llamadas simultáneas usando el flag del provider
+    if (salesProvider.isCurrentlyLoadingSales) {
+      return;
+    }
+
+    try {
+      final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
+
+      final projectId = settingsProvider.activeProjectId;
+      if (projectId != null) {
+        await salesProvider.loadSales(projectId);
+      }
+    } catch (e) {
+      // Error manejado silenciosamente
+    }
+  }
+
+  List<Sale> _getRecentSales() {
+    final salesProvider = Provider.of<SalesProvider>(context);
+    final completedSales = salesProvider.completedSales;
+
+    // Ordenar por fecha (más recientes primero) y obtener las 5 más recientes
+    return completedSales
+        .toList()
+        ..sort((a, b) => b.saleDate.compareTo(a.saleDate))
+        ..take(5)
+        .toList();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -232,7 +243,94 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-              ...recentSales.map((sale) => _buildRecentSaleCard(sale)),
+              Consumer<SalesProvider>(
+                builder: (context, salesProvider, child) {
+                  // Trigger lazy loading when screen is accessed
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted) {
+                      _ensureSalesDataLoaded();
+                    }
+                  });
+                  if (salesProvider.isLoading) {
+                    return const LoadingWidget();
+                  }
+
+                  if (salesProvider.error != null) {
+                    return Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(32),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.error_outline,
+                            size: 64,
+                            color: Theme.of(context).colorScheme.error.withValues(alpha: 0.5),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Error al cargar ventas',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              color: Theme.of(context).colorScheme.error,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            salesProvider.error!,
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: _loadRecentSales,
+                            child: const Text('Reintentar'),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  final recentSales = _getRecentSales();
+
+                  if (recentSales.isEmpty) {
+                    return Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(32),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.receipt_long_outlined,
+                            size: 64,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'No hay ventas recientes',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Las ventas aparecerán aquí cuando se registren',
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  return Column(
+                    children: recentSales.map((sale) => _buildRecentSaleCard(sale)).toList(),
+                  );
+                },
+              ),
             ],
           ),
         ),

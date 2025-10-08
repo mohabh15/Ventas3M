@@ -28,6 +28,25 @@ class _TeamBalanceScreenState extends State<TeamBalanceScreen> {
   @override
   void initState() {
     super.initState();
+
+    // Diferir la carga inicial hasta después del build para evitar setState() durante build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadTeamBalances();
+
+      // Escuchar cambios en el proyecto activo
+      final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
+      settingsProvider.addListener(_onProjectChanged);
+    });
+  }
+
+  @override
+  void dispose() {
+    final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
+    settingsProvider.removeListener(_onProjectChanged);
+    super.dispose();
+  }
+
+  void _onProjectChanged() {
     _loadTeamBalances();
   }
 
@@ -159,15 +178,17 @@ class _TeamBalanceScreenState extends State<TeamBalanceScreen> {
 
   Future<void> _updateMemberBalance(String balanceId, double newBalance) async {
     try {
-      setState(() {
-        final index = _teamBalances.indexWhere((balance) => balance.id == balanceId);
-        if (index != -1) {
-          _teamBalances[index] = _teamBalances[index].copyWith(
-            balance: newBalance,
-            lastUpdated: DateTime.now(),
-          );
-        }
-      });
+      if (mounted) {
+        setState(() {
+          final index = _teamBalances.indexWhere((balance) => balance.id == balanceId);
+          if (index != -1) {
+            _teamBalances[index] = _teamBalances[index].copyWith(
+              balance: newBalance,
+              lastUpdated: DateTime.now(),
+            );
+          }
+        });
+      }
 
       // Actualizar en Firestore
       await FirebaseFirestore.instance.collection('team_balances').doc(balanceId).update({
@@ -177,9 +198,11 @@ class _TeamBalanceScreenState extends State<TeamBalanceScreen> {
     } catch (e) {
       // Recargar datos en caso de error
       await _loadTeamBalances();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al actualizar balance: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al actualizar balance: $e')),
+        );
+      }
     }
   }
 

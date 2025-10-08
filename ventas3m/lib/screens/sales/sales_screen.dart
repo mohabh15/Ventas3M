@@ -24,16 +24,55 @@ class _SalesScreenState extends State<SalesScreen> {
   @override
   void initState() {
     super.initState();
-    // Cargar ventas después de que el frame esté completo
+
+    // Escuchar cambios en el proyecto activo pero no cargar datos automáticamente
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
-        final projectId = settingsProvider.activeProjectId;
-        if (projectId != null) {
-          Provider.of<SalesProvider>(context, listen: false).loadSales(projectId);
-        }
-      }
+      final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
+      settingsProvider.addListener(_onProjectChanged);
     });
+  }
+
+  @override
+  void dispose() {
+    final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
+    settingsProvider.removeListener(_onProjectChanged);
+    super.dispose();
+  }
+
+  void _onProjectChanged() {
+    // No cargar datos automáticamente en cambios de proyecto
+    // Los datos se cargarán cuando el usuario interactúe con la pantalla
+  }
+
+  /// Carga datos de ventas solo cuando sea necesario (lazy loading)
+  Future<void> _ensureSalesDataLoaded() async {
+    final salesProvider = Provider.of<SalesProvider>(context, listen: false);
+    final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
+
+    final projectId = settingsProvider.activeProjectId;
+    if (projectId != null && !salesProvider.isDataLoadedForProject(projectId)) {
+      await _loadSalesData();
+    }
+  }
+
+  Future<void> _loadSalesData() async {
+    final salesProvider = Provider.of<SalesProvider>(context, listen: false);
+
+    // Prevenir múltiples llamadas simultáneas usando el flag del provider
+    if (salesProvider.isCurrentlyLoadingSales) {
+      return;
+    }
+
+    try {
+      final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
+
+      final projectId = settingsProvider.activeProjectId;
+      if (projectId != null) {
+        await salesProvider.loadSales(projectId);
+      }
+    } catch (e) {
+      // Error manejado silenciosamente
+    }
   }
 
   @override
@@ -55,6 +94,12 @@ class _SalesScreenState extends State<SalesScreen> {
               Expanded(
                 child: Consumer2<SalesProvider, ProductsProvider>(
                   builder: (context, salesProvider, productsProvider, child) {
+                    // Trigger lazy loading when screen is accessed
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (mounted) {
+                        _ensureSalesDataLoaded();
+                      }
+                    });
                     final sales = salesProvider.sales;
 
                     // Función auxiliar para obtener el nombre del producto
@@ -188,12 +233,12 @@ class _SalesScreenState extends State<SalesScreen> {
     }
 
     return GestureDetector(
-      onTap: () => _showSaleDetailsModal(context, sale),
+      onTap: () => _showSaleDetailsModal(sale),
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
           color: Theme.of(context).brightness == Brightness.dark
-              ? Colors.grey[850]
+              ? const Color(0xFF1E1E1E)
               : Colors.white,
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
@@ -389,11 +434,8 @@ class _SalesScreenState extends State<SalesScreen> {
     }
   }
 
-  void _showSaleDetailsModal(BuildContext context, Sale sale) async {
+  void _showSaleDetailsModal(Sale sale) async {
     // Verificar que el widget esté montado antes de continuar
-    if (!mounted) return;
-
-    // Verificar que el widget esté montado antes de usar el contexto
     if (!mounted) return;
 
     // Obtener información del producto
@@ -423,10 +465,7 @@ class _SalesScreenState extends State<SalesScreen> {
       createdByName = sale.createdBy;
     }
 
-    // Verificar nuevamente que el widget esté montado antes de usar el contexto
-    if (!mounted) return;
-
-    // Verificación adicional justo antes de usar el contexto
+    // Verificar que el widget esté montado antes de usar el contexto
     if (!mounted) return;
 
     showModalBottomSheet(

@@ -40,7 +40,7 @@ class _ManagementScreenState extends State<ManagementScreen> {
     //final theme = Theme.of(context);
 
     // Calcular la altura de la barra de navegación inferior
-    final bottomPadding = MediaQuery.of(context).padding.bottom;
+    //final bottomPadding = MediaQuery.of(context).padding.bottom;
 
     return Scaffold(
       appBar: GradientAppBar(

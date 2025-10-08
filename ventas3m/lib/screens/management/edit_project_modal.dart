@@ -525,14 +525,14 @@ class _EditProjectModalState extends State<EditProjectModal> {
 
       await _firebaseService.updateProject(updatedProject);
 
-      if (context.mounted) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Proyecto actualizado correctamente')),
         );
         Navigator.of(context).pop();
       }
     } catch (e) {
-      if (context.mounted) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error al actualizar proyecto: $e')),
         );

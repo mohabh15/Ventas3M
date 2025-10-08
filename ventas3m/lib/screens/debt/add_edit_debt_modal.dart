@@ -363,7 +363,7 @@ class _AddEditDebtModalState extends State<AddEditDebtModal> {
                       borderSide: BorderSide(color: theme.colorScheme.primary, width: 2),
                     ),
                   ),
-                  value: _selectedDebtType,
+                  initialValue: _selectedDebtType,
                   items: DebtType.values.map((type) {
                     return DropdownMenuItem(
                       value: type,

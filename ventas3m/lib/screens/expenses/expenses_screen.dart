@@ -82,8 +82,8 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   @override
   Widget build(BuildContext context) {
     // Calcular la altura de la barra de navegación inferior
-    final bottomPadding = MediaQuery.of(context).padding.bottom;
-    final marginBottom = bottomPadding + 16.0; // Margen de 16px encima de la navbar
+    //final bottomPadding = MediaQuery.of(context).padding.bottom;
+    //final marginBottom = bottomPadding + 16.0; // Margen de 16px encima de la navbar
 
     return Scaffold(
       appBar: GradientAppBar(
@@ -121,6 +121,11 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
             ],
           );
         },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showAddExpenseModal,
+        tooltip: 'Añadir Gasto',
+        child: const Icon(Icons.add),
       ),
     );
   }

@@ -8,11 +8,15 @@ class SalesProvider extends ChangeNotifier {
 
   List<Sale> _sales = [];
   bool _isLoading = false;
+  bool _isLoadingSales = false; // Flag específico para loadSales
   String? _error;
   String? _currentProjectId;
+  DateTime? _lastLoadTime; // Para controlar la frescura de datos
+  static const Duration _dataFreshnessDuration = Duration(minutes: 5); // Datos frescos por 5 minutos
 
   List<Sale> get sales => _sales;
   bool get isLoading => _isLoading;
+  bool get isLoadingSales => _isLoadingSales;
   String? get error => _error;
 
   // Getters adicionales
@@ -24,8 +28,29 @@ class SalesProvider extends ChangeNotifier {
   double get totalProfit => completedSales.fold(0.0, (accumulator, sale) => accumulator + sale.profit);
   double get totalDebt => salesWithDebt.fold(0.0, (accumulator, sale) => accumulator + (sale.debt ?? 0.0));
 
-  /// Carga ventas desde Firestore para un proyecto específico
+  /// Verifica si los datos están cargados para un proyecto específico
+  bool isDataLoadedForProject(String projectId) {
+    return _currentProjectId == projectId &&
+           _sales.isNotEmpty &&
+           _lastLoadTime != null &&
+           DateTime.now().difference(_lastLoadTime!) < _dataFreshnessDuration;
+  }
+
+  /// Verifica si ya se está cargando datos para evitar llamadas simultáneas
+  bool get isCurrentlyLoadingSales => _isLoadingSales;
+
+  /// Carga ventas desde Firestore para un proyecto específico con prevención de llamadas simultáneas
   Future<void> loadSales(String projectId) async {
+    // Si ya se está cargando, salir inmediatamente
+    if (_isLoadingSales) {
+      return;
+    }
+
+    // Si los datos están frescos para este proyecto, no recargar
+    if (isDataLoadedForProject(projectId)) {
+      return;
+    }
+    _isLoadingSales = true;
     _isLoading = true;
     _error = null;
     _currentProjectId = projectId;
@@ -33,9 +58,11 @@ class SalesProvider extends ChangeNotifier {
 
     try {
       _sales = await _saleService.getSalesFromFirestore(projectId);
+      _lastLoadTime = DateTime.now();
     } catch (e) {
       _error = e.toString();
     } finally {
+      _isLoadingSales = false;
       _isLoading = false;
       notifyListeners();
     }
