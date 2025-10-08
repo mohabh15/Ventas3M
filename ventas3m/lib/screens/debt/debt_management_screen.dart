@@ -9,6 +9,7 @@ import '../../core/widgets/gradient_app_bar.dart';
 import '../../services/formatting_service.dart';
 import '../../services/debt_service.dart';
 import 'add_edit_debt_modal.dart';
+import 'debt_details_modal.dart';
 
 class DebtManagementScreen extends StatefulWidget {
   const DebtManagementScreen({super.key});
@@ -856,9 +857,13 @@ class _DebtManagementScreenState extends State<DebtManagementScreen> {
   }
 
   void _showDebtDetails(Debt debt) {
-    // TODO: Implementar modal de detalles de deuda
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Detalles de: ${debt.description}')),
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return DebtDetailsModal(debt: debt);
+      },
     );
   }
 
@@ -880,10 +885,35 @@ class _DebtManagementScreenState extends State<DebtManagementScreen> {
   }
 
   Future<void> _showEditDebtModal(Debt debt) async {
-    // TODO: Implementar modal para editar deuda
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Editar: ${debt.description}')),
+    final result = await showModalBottomSheet<Map<String, dynamic>>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: AddEditDebtModal(debt: debt),
+        );
+      },
     );
+
+    // Manejar resultado del modal
+    if (result != null && mounted) {
+      final success = result['success'] as bool? ?? false;
+      final message = result['message'] as String? ?? '';
+
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _markDebtAsPaid(Debt debt) async {
