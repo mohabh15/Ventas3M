@@ -7,6 +7,10 @@ import '../../providers/expense_provider.dart';
 import '../../providers/team_balance_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/sales_provider.dart';
+import '../../providers/auth_provider.dart';
+import '../../providers/debt_provider.dart';
+import '../../models/debt.dart';
+import '../../services/debt_service.dart';
 
 class BankingScreen extends StatefulWidget {
   const BankingScreen({super.key});
@@ -17,9 +21,12 @@ class BankingScreen extends StatefulWidget {
 
 class _BankingScreenState extends State<BankingScreen> {
   late ExpenseProvider _expenseProvider;
-  late TeamBalanceProvider _teamBalanceProvider;
-  late SettingsProvider _settingsProvider;
-  late SalesProvider _salesProvider;
+   late TeamBalanceProvider _teamBalanceProvider;
+   late SettingsProvider _settingsProvider;
+   late SalesProvider _salesProvider;
+   late AuthProvider _authProvider;
+   late DebtService _debtService;
+   late DebtProvider _debtProvider;
 
   @override
   void didChangeDependencies() {
@@ -28,13 +35,22 @@ class _BankingScreenState extends State<BankingScreen> {
     _teamBalanceProvider = Provider.of<TeamBalanceProvider>(context);
     _settingsProvider = Provider.of<SettingsProvider>(context);
     _salesProvider = Provider.of<SalesProvider>(context);
+    _authProvider = Provider.of<AuthProvider>(context);
+    _debtService = DebtService();
+    _debtProvider = Provider.of<DebtProvider>(context);
 
     // Cargar datos iniciales después de que el frame esté construido
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && _settingsProvider.activeProjectId != null) {
-        _salesProvider.loadSales(_settingsProvider.activeProjectId!);
-      }
-    });
+     WidgetsBinding.instance.addPostFrameCallback((_) {
+       if (mounted && _settingsProvider.activeProjectId != null) {
+         _salesProvider.loadSales(_settingsProvider.activeProjectId!);
+         _debtProvider.loadDebts(_settingsProvider.activeProjectId!);
+       }
+     });
+   }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 
   @override
@@ -60,8 +76,12 @@ class _BankingScreenState extends State<BankingScreen> {
 
                 const SizedBox(height: 24),
 
-                // Tarjetas de resumen financiero
-                _buildFinancialSummaryCards(),
+                // Tarjetas de resumen financiero con listener para deudas
+                Consumer<DebtProvider>(
+                  builder: (context, debtProvider, child) {
+                    return _buildFinancialSummaryCards();
+                  },
+                ),
 
                 const SizedBox(height: 32),
 
@@ -75,40 +95,12 @@ class _BankingScreenState extends State<BankingScreen> {
 
                 const SizedBox(height: 32),
 
-                // Pendientes
-                _buildPendingSection(),
+                // Últimas Deudas
+                _buildRecentDebtsSection(),
               ],
             ),
           ),
 
-          // Botón flotante posicionado relativo a la navbar
-          Positioned(
-            right: 16.0,
-            bottom: bottomPadding + 16.0,
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Color(0xFF0D47A1), // Azul oscuro
-                    Color(0xFF1976D2), // Azul primario
-                    Color(0xFF42A5F5), // Azul claro
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                shape: BoxShape.circle,
-              ),
-              child: FloatingActionButton(
-                heroTag: 'banking_fab',
-                onPressed: () {
-                  // TODO: Implementar navegación a pantalla de agregar transacción
-                },
-                backgroundColor: Colors.transparent,
-                elevation: 0,
-                child: const Icon(Icons.add, color: Colors.white),
-              ),
-            ),
-          ),
         ],
       ),
     );
@@ -244,6 +236,84 @@ class _BankingScreenState extends State<BankingScreen> {
     }).toList();
   }
 
+  // Método para obtener deudas recientes formateadas
+  List<Widget> _buildRecentDebtsFromData() {
+    final currentUserEmail = _authProvider.currentUser?.email ?? '';
+    final activeProjectId = _settingsProvider.activeProjectId ?? '';
+
+    return [
+      StreamBuilder<List<Debt>>(
+        stream: _debtService.getRecentDebts(limit: 3),
+        builder: (context, snapshot) {
+          // Si no hay usuario o proyecto activo, mostrar mensaje
+          if (currentUserEmail.isEmpty || activeProjectId.isEmpty) {
+            return Container(
+              padding: const EdgeInsets.all(20),
+              child: Text(
+                'No hay usuario activo',
+                style: TextStyle(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Theme.of(context).textTheme.bodySmall?.color
+                      : Colors.black54,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            );
+          }
+
+          if (snapshot.connectionState == ConnectionState.waiting && snapshot.data == null) {
+            return Container(
+              padding: const EdgeInsets.all(20),
+              child: Text(
+                'Cargando deudas...',
+                style: TextStyle(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Theme.of(context).textTheme.bodySmall?.color
+                      : Colors.black54,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            );
+          }
+
+          if (snapshot.hasError) {
+            return Container(
+              padding: const EdgeInsets.all(20),
+              child: Text(
+                'Error al cargar deudas',
+                style: TextStyle(
+                  color: Colors.red,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            );
+          }
+
+          final debts = snapshot.data ?? [];
+
+          if (debts.isEmpty) {
+            return Container(
+              padding: const EdgeInsets.all(20),
+              child: Text(
+                'No hay deudas registradas',
+                style: TextStyle(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Theme.of(context).textTheme.bodySmall?.color
+                      : Colors.black54,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            );
+          }
+
+          return Column(
+            children: debts.map((debt) => _buildDebtItem(debt)).toList(),
+          );
+        },
+      ),
+    ];
+  }
+
   Widget _buildBalanceTotalCard() {
     // Calcular ingresos totales desde ventas completadas
     final totalSales = _salesProvider.sales
@@ -338,11 +408,13 @@ class _BankingScreenState extends State<BankingScreen> {
     final totalExpenses = _expenseProvider.totalExpenses;
     final formattedExpenses = '\$${totalExpenses.toStringAsFixed(0)}';
 
-    // Calcular ventas con deuda (por cobrar)
-    final pendingSales = _salesProvider.sales.where((sale) => sale.hasDebt && !sale.isCompleted).toList();
-    final totalPending = pendingSales.fold<double>(0.0, (sum, sale) => sum + sale.totalAmount);
-    final pendingCount = pendingSales.length;
+    // Calcular total de deudas pendientes reales usando DebtProvider
+    final totalPending = _debtProvider.totalPendingAmount;
+    final pendingCount = _debtProvider.pendingDebts.length;
 
+    // Calcular total de todas las deudas del proyecto
+    final currentUserEmail = _authProvider.currentUser?.email ?? '';
+    final activeProjectId = _settingsProvider.activeProjectId ?? '';
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -352,26 +424,11 @@ class _BankingScreenState extends State<BankingScreen> {
             child: _buildSummaryCard(
               icon: Icons.arrow_downward,
               iconColor: Colors.green,
-              title: 'Por Cobrar',
+              title: 'Deuda Total',
               amount: '\$${totalPending.toStringAsFixed(0)}',
               subtitle: '$pendingCount pendientes',
               gradient: LinearGradient(
                 colors: [Color(0xFF1B5E20), Color(0xFF4CAF50)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _buildSummaryCard(
-              icon: Icons.arrow_upward,
-              iconColor: AppColors.primary,
-              title: 'Por Pagar',
-              amount: '\$${totalExpenses.toStringAsFixed(0)}',
-              subtitle: 'Gastos registrados',
-              gradient: LinearGradient(
-                colors: [AppColors.primary, AppColors.primary],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -770,6 +827,48 @@ class _BankingScreenState extends State<BankingScreen> {
     );
   }
 
+  Widget _buildRecentDebtsSection() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Últimas Deudas',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Theme.of(context).textTheme.titleLarge?.color
+                      : Colors.black87,
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pushNamed(context, '/debt-management');
+                },
+                child: Text(
+                  'Ver todo',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Color(0xFF2196F3) // Azul primario en modo oscuro
+                        : Theme.of(context).primaryColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          ..._buildRecentDebtsFromData(),
+        ],
+      ),
+    );
+  }
+
   Widget _buildExpenseItem({
     required IconData icon,
     required Color iconColor,
@@ -852,198 +951,139 @@ class _BankingScreenState extends State<BankingScreen> {
     );
   }
 
-  Widget _buildPendingSection() {
-    // Obtener ventas pendientes reales
-    final pendingSales = _salesProvider.sales.where((sale) => sale.hasDebt && !sale.isCompleted).toList();
+  Widget _buildDebtItem(Debt debt) {
+    // Obtener usuario actual
+    final currentUserEmail = _authProvider.currentUser?.email ?? '';
 
-    if (pendingSales.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Pendientes',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? Theme.of(context).textTheme.titleLarge?.color
-                    : Colors.black87,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(20),
-              child: Text(
-                'No hay ventas pendientes',
-                style: TextStyle(
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? Theme.of(context).textTheme.bodySmall?.color
-                      : Colors.black54,
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
+    // Determinar si somos el deudor o acreedor
+    final isWeDebtor = debt.debtor == currentUserEmail;
+    final isWeCreditor = debt.creditor == currentUserEmail;
+
+    // Obtener ícono basado en el estado de la deuda
+    IconData getIconForStatus(DebtStatus status) {
+      switch (status) {
+        case DebtStatus.pending:
+          return Icons.pending;
+        case DebtStatus.paid:
+          return Icons.check_circle;
+        case DebtStatus.overdue:
+          return Icons.warning;
+        case DebtStatus.cancelled:
+          return Icons.cancel;
+      }
     }
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Pendientes',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? Theme.of(context).textTheme.titleLarge?.color
-                  : Colors.black87,
-            ),
-          ),
-          const SizedBox(height: 16),
-          ...pendingSales.take(3).map((sale) {
-            // Calcular días de vencimiento (simulado)
-            final daysUntilDue = 7; // TODO: Calcular basado en fecha real de vencimiento
-            final isOverdue = daysUntilDue < 0;
+    // Obtener color basado en el estado de la deuda
+    Color getColorForStatus(DebtStatus status) {
+      switch (status) {
+        case DebtStatus.pending:
+          return Colors.blue;
+        case DebtStatus.paid:
+          return Colors.green;
+        case DebtStatus.overdue:
+          return Colors.red;
+        case DebtStatus.cancelled:
+          return Colors.grey;
+      }
+    }
 
-            return _buildPendingItem(
-              client: sale.customerName,
-              invoice: 'Factura #${sale.id.substring(0, 8).toUpperCase()}',
-              amount: '\$${sale.totalAmount.toStringAsFixed(0)}',
-              dueDate: isOverdue ? 'Vencido: ${daysUntilDue.abs()} días' : 'Vence: $daysUntilDue días',
-              status: isOverdue ? 'overdue' : 'pending',
-            );
-          }),
-        ],
-      ),
-    );
-  }
+    // Calcular monto con signo según nuestra posición
+    double displayAmount = debt.amount;
+    if (isWeDebtor) {
+      displayAmount = -debt.amount; // Negativo si debemos pagar
+    }
 
-  Widget _buildPendingItem({
-    required String client,
-    required String invoice,
-    required String amount,
-    required String dueDate,
-    required String status,
-  }) {
-    final isOverdue = status == 'overdue';
-    final isPaid = status == 'paid';
+    // Color del monto basado en el tipo de deuda
+    Color amountColor;
+    if (debt.isToPay) {
+      amountColor = Colors.red; // Rojo si es deuda a pagar
+    } else if (debt.isToCollect) {
+      amountColor = Colors.green; // Verde si es deuda a cobrar
+    } else {
+      amountColor = Colors.black87; // Color por defecto
+    }
+
+    // Formatear fecha relativa
+    String getRelativeDate(DateTime date) {
+      final now = DateTime.now();
+      final difference = now.difference(date).inDays;
+
+      if (difference == 0) return 'Hoy';
+      if (difference == 1) return 'Ayer';
+      if (difference < 7) return 'Hace $difference días';
+      if (difference < 30) return '${(difference / 7).floor()} sem';
+      return '${(difference / 30).floor()} mes';
+    }
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Theme.of(context).dividerColor),
       ),
-      child: Column(
+      child: Row(
         children: [
-          Row(
-            children: [
-              CircleAvatar(
-                backgroundColor: isPaid ? Colors.green : (isOverdue ? Colors.red : Colors.blue),
-                child: Icon(
-                  isPaid ? Icons.check : Icons.person,
-                  color: Colors.white,
-                  size: 14,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      client,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? Theme.of(context).textTheme.titleMedium?.color
-                            : Colors.black87,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    Text(
-                      invoice,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? Theme.of(context).textTheme.bodySmall?.color
-                            : Colors.black54,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    amount,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? Theme.of(context).textTheme.titleLarge?.color
-                          : Colors.black87,
-                    ),
-                  ),
-                  Text(
-                    dueDate,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: isOverdue ? Colors.red : (Theme.of(context).brightness == Brightness.dark
-                          ? Theme.of(context).textTheme.bodySmall?.color
-                          : Colors.black54),
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ],
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: getColorForStatus(debt.status).withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Icon(getIconForStatus(debt.status), color: getColorForStatus(debt.status), size: 18),
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Flexible(
-                flex: 1,
-                child: ElevatedButton.icon(
-                  onPressed: () {},
-                  icon: Icon(Icons.call, size: 14),
-                  label: Text('Recordar', style: TextStyle(fontSize: 12)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: isOverdue ? Colors.orange : Colors.blue,
-                    foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(6),
-                    ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  debt.description,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Theme.of(context).textTheme.titleMedium?.color
+                        : Colors.black87,
                   ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  isWeDebtor
+                    ? '${debt.debtor} → ${debt.creditor} (debemos)'
+                    : isWeCreditor
+                      ? '${debt.debtor} → ${debt.creditor} (nos deben)'
+                      : '${debt.debtor} → ${debt.creditor}',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Theme.of(context).textTheme.bodySmall?.color
+                        : Colors.black54,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                '${displayAmount >= 0 ? '+' : ''}\$${displayAmount.abs().toStringAsFixed(0)}',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: amountColor,
                 ),
               ),
-              const SizedBox(width: 6),
-              Flexible(
-                flex: 1,
-                child: OutlinedButton.icon(
-                  onPressed: () {},
-                  icon: Icon(isPaid ? Icons.visibility : Icons.check, size: 14),
-                  label: Text(isPaid ? 'Ver' : 'Cobrar', style: TextStyle(fontSize: 12)),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: isPaid ? Colors.green : Theme.of(context).primaryColor,
-                    side: BorderSide(color: isPaid ? Colors.green : Theme.of(context).primaryColor),
-                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                  ),
+              Text(
+                getRelativeDate(debt.date),
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Theme.of(context).textTheme.bodySmall?.color
+                      : Colors.black54,
                 ),
               ),
             ],
@@ -1052,4 +1092,6 @@ class _BankingScreenState extends State<BankingScreen> {
       ),
     );
   }
+
+
 }

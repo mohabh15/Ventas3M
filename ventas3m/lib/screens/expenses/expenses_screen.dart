@@ -122,31 +122,6 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
           );
         },
       ),
-      floatingActionButton: Positioned(
-        right: 16.0,
-        bottom: marginBottom,
-        child: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                Color(0xFF0D47A1), // Azul oscuro
-                Color(0xFF1976D2), // Azul primario
-                Color(0xFF42A5F5), // Azul claro
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            shape: BoxShape.circle,
-          ),
-          child: FloatingActionButton(
-            heroTag: 'expenses_fab',
-            onPressed: _showAddExpenseModal,
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            child: const Icon(Icons.add, color: Colors.white),
-          ),
-        ),
-      ),
     );
   }
 

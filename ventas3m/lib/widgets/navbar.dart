@@ -3,7 +3,6 @@ import '../core/theme/colors.dart';
 import '../screens/dashboard/dashboard_screen.dart';
 import '../screens/sales/sales_screen.dart';
 import '../screens/products/products_screen.dart';
-import '../screens/management/management_screen.dart';
 import '../screens/banking/banking_screen.dart';
 
 class NavBar extends StatefulWidget {
@@ -20,7 +19,6 @@ class NavBarState extends State<NavBar> {
     SalesScreen(),
     ProductsScreen(),
     BankingScreen(),
-    ManagementScreen(),
   ];
 
   void _onItemTapped(int index) {
@@ -67,7 +65,6 @@ class NavBarState extends State<NavBar> {
               _buildNavItem(1, Icons.bar_chart_rounded, 'Ventas'),
               _buildNavItem(2, Icons.inventory_2_rounded, 'Productos'),
               _buildNavItem(3, Icons.account_balance, 'Banca'),
-              _buildNavItem(4, Icons.business, 'Gestión'),
             ],
           ),
         ),

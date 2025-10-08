@@ -11,6 +11,7 @@ import 'providers/sales_provider.dart';
 import 'providers/products_provider.dart';
 import 'providers/product_stock_provider.dart';
 import 'providers/expense_provider.dart';
+import 'providers/debt_provider.dart';
 import 'providers/team_balance_provider.dart';
 import 'core/theme/responsive_theme.dart';
 import 'widgets/auth_wrapper.dart';
@@ -55,6 +56,8 @@ Future<void> main() async {
         }),
         // ExpenseProvider para gestionar los gastos
         ChangeNotifierProvider(create: (_) => ExpenseProvider()),
+        // DebtProvider para gestionar las deudas
+        ChangeNotifierProvider(create: (_) => DebtProvider()),
         // TeamBalanceProvider para gestionar balances del equipo
         ChangeNotifierProvider(create: (context) {
           final teamBalanceProvider = TeamBalanceProvider(context.read<SettingsProvider>());

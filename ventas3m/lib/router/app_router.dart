@@ -10,6 +10,7 @@ import '../screens/products/products_screen.dart';
 import '../screens/expenses/expenses_screen.dart';
 import '../screens/expenses/add_edit_expense_modal.dart';
 import '../screens/banking/team_balance_screen.dart';
+import '../screens/debt/debt_management_screen.dart';
 import '../models/expense.dart';
 
 class AppRouter {
@@ -25,6 +26,7 @@ class AppRouter {
   static const String addExpense = '/add-expense';
   static const String editExpense = '/edit-expense';
   static const String teamBalance = '/team-balance';
+  static const String debtManagement = '/debt-management';
 
   static Map<String, WidgetBuilder> get routes => {
     login: (context) => const LoginScreen(),
@@ -41,5 +43,6 @@ class AppRouter {
       expense: ModalRoute.of(context)?.settings.arguments as Expense?,
     ),
     teamBalance: (context) => const TeamBalanceScreen(),
+    debtManagement: (context) => const DebtManagementScreen(),
   };
 }

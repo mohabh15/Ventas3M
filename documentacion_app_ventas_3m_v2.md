@@ -1435,7 +1435,7 @@ lib/
 - [X] Crear pantalla de gestión de gastos
 - [X] Desarrollar formulario de registro de gastos
 - [X] Implementar categorización de gastos
-- [ ] Crear sistema de deudas 
+- [X] Crear sistema de deudas 
 - [ ] Crear reportes financieros básicos
 - [ ] Desarrollar KPIs iniciales
 
