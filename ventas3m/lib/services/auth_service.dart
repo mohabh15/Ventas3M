@@ -197,6 +197,24 @@ class AuthService {
     }
   }
 
+  // Método auxiliar para obtener usuario por ID desde Firestore
+  Future<User?> getUserById(String userId) async {
+    try {
+      final userDoc = await _firestore.collection('users').doc(userId).get();
+
+      if (userDoc.exists) {
+        final userData = userDoc.data()!;
+        return User.fromJson({
+          ...userData,
+          'id': userId,
+        });
+      }
+      return null;
+    } catch (e) {
+      throw AuthException('Error al obtener datos del usuario: ${e.toString()}');
+    }
+  }
+
   // Método auxiliar para manejar excepciones de Firebase Auth
   AuthException _handleFirebaseAuthException(firebase_auth.FirebaseAuthException e) {
     switch (e.code) {

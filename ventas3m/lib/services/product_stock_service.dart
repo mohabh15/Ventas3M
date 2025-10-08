@@ -87,6 +87,31 @@ class ProductStockService {
     }
   }
 
+  // Reducir cantidad de un stock específico
+  Future<bool> reduceStockQuantity(String stockId, int quantityToReduce) async {
+    try {
+      final stock = await getStock(stockId);
+      if (stock == null) {
+        throw Exception('Stock no encontrado');
+      }
+
+      if (stock.quantity < quantityToReduce) {
+        throw Exception('Cantidad insuficiente en el stock seleccionado. Disponible: ${stock.quantity}');
+      }
+
+      final newQuantity = stock.quantity - quantityToReduce;
+      final updatedStock = stock.copyWith(
+        quantity: newQuantity,
+        updatedAt: DateTime.now(),
+      );
+
+      await updateStock(updatedStock);
+      return true;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   // Obtener stock por responsable
   Future<List<ProductStock>> getStockByResponsible(String projectId, String responsibleId) async {
     try {

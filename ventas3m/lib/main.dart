@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'firebase_options.dart';
 import 'providers/settings_provider.dart';
 import 'providers/theme_provider.dart';
@@ -9,12 +10,18 @@ import 'providers/auth_provider.dart';
 import 'providers/sales_provider.dart';
 import 'providers/products_provider.dart';
 import 'providers/product_stock_provider.dart';
+import 'providers/expense_provider.dart';
+import 'providers/team_balance_provider.dart';
 import 'core/theme/responsive_theme.dart';
 import 'widgets/auth_wrapper.dart';
 import 'router/app_router.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Inicializar datos de localización para formateo de fechas y números
+  await initializeDateFormatting('es_ES', null);
+
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(
     MultiProvider(
@@ -45,6 +52,13 @@ Future<void> main() async {
           // Conectar con SettingsProvider para sincronización
           stockProvider.setSettingsProvider(context.read<SettingsProvider>());
           return stockProvider;
+        }),
+        // ExpenseProvider para gestionar los gastos
+        ChangeNotifierProvider(create: (_) => ExpenseProvider()),
+        // TeamBalanceProvider para gestionar balances del equipo
+        ChangeNotifierProvider(create: (context) {
+          final teamBalanceProvider = TeamBalanceProvider(context.read<SettingsProvider>());
+          return teamBalanceProvider;
         }),
         // AuthProvider va último ya que puede necesitar acceso a otros providers
         ChangeNotifierProvider(create: (_) => AuthProvider()),

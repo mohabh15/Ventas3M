@@ -1,5 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../core/widgets/gradient_app_bar.dart';
+import '../../router/app_router.dart';
+import '../../core/theme/colors.dart';
+import '../../providers/expense_provider.dart';
+import '../../providers/team_balance_provider.dart';
+import '../../providers/settings_provider.dart';
+import '../../providers/sales_provider.dart';
 
 class BankingScreen extends StatefulWidget {
   const BankingScreen({super.key});
@@ -9,6 +16,27 @@ class BankingScreen extends StatefulWidget {
 }
 
 class _BankingScreenState extends State<BankingScreen> {
+  late ExpenseProvider _expenseProvider;
+  late TeamBalanceProvider _teamBalanceProvider;
+  late SettingsProvider _settingsProvider;
+  late SalesProvider _salesProvider;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _expenseProvider = Provider.of<ExpenseProvider>(context);
+    _teamBalanceProvider = Provider.of<TeamBalanceProvider>(context);
+    _settingsProvider = Provider.of<SettingsProvider>(context);
+    _salesProvider = Provider.of<SalesProvider>(context);
+
+    // Cargar datos iniciales después de que el frame esté construido
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _settingsProvider.activeProjectId != null) {
+        _salesProvider.loadSales(_settingsProvider.activeProjectId!);
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     // Theme disponible a través de context cuando sea necesario
@@ -86,7 +114,148 @@ class _BankingScreenState extends State<BankingScreen> {
     );
   }
 
+  // Método para obtener gastos recientes formateados
+  List<Widget> _buildRecentExpensesFromData() {
+    // Mostrar indicador de carga si está cargando
+    if (_expenseProvider.isLoading) {
+      return [
+        Container(
+          padding: const EdgeInsets.all(20),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    Theme.of(context).primaryColor,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Cargando gastos...',
+                style: TextStyle(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Theme.of(context).textTheme.bodySmall?.color
+                      : Colors.black54,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ];
+    }
+
+    final recentExpenses = _expenseProvider.expenses.take(3).toList();
+
+    if (recentExpenses.isEmpty) {
+      return [
+        Container(
+          padding: const EdgeInsets.all(20),
+          child: Text(
+            'No hay gastos registrados',
+            style: TextStyle(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Theme.of(context).textTheme.bodySmall?.color
+                  : Colors.black54,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        ),
+      ];
+    }
+
+    return recentExpenses.map((expense) {
+      // Mapear categorías a íconos apropiados
+      IconData getIconForCategory(String category) {
+        switch (category.toLowerCase()) {
+          case 'inventario':
+          case 'productos':
+            return Icons.inventory;
+          case 'servicios':
+          case 'electricidad':
+          case 'agua':
+          case 'gas':
+            return Icons.electrical_services;
+          case 'transporte':
+          case 'gasolina':
+          case 'mantenimiento':
+            return Icons.local_shipping;
+          case 'oficina':
+          case 'materiales':
+            return Icons.business;
+          case 'marketing':
+          case 'publicidad':
+            return Icons.campaign;
+          default:
+            return Icons.receipt;
+        }
+      }
+
+      // Mapear categorías a colores apropiados
+      Color getColorForCategory(String category) {
+        switch (category.toLowerCase()) {
+          case 'inventario':
+          case 'productos':
+            return Colors.orange;
+          case 'servicios':
+          case 'electricidad':
+          case 'agua':
+          case 'gas':
+            return Colors.purple;
+          case 'transporte':
+          case 'gasolina':
+          case 'mantenimiento':
+            return Colors.blue;
+          case 'oficina':
+          case 'materiales':
+            return Colors.green;
+          case 'marketing':
+          case 'publicidad':
+            return Colors.red;
+          default:
+            return Colors.grey;
+        }
+      }
+
+      // Formatear fecha relativa
+      String getRelativeDate(DateTime date) {
+        final now = DateTime.now();
+        final difference = now.difference(date).inDays;
+
+        if (difference == 0) return 'Hoy';
+        if (difference == 1) return 'Ayer';
+        if (difference < 7) return 'Hace $difference días';
+        if (difference < 30) return '${(difference / 7).floor()} sem';
+        return '${(difference / 30).floor()} mes';
+      }
+
+      return _buildExpenseItem(
+        icon: getIconForCategory(expense.category),
+        iconColor: getColorForCategory(expense.category),
+        title: expense.category,
+        subtitle: expense.description,
+        amount: '-${expense.formattedAmount}',
+        date: getRelativeDate(expense.date),
+      );
+    }).toList();
+  }
+
   Widget _buildBalanceTotalCard() {
+    // Calcular ingresos totales desde ventas completadas
+    final totalSales = _salesProvider.sales
+        .where((sale) => sale.isCompleted)
+        .fold<double>(0.0, (sum, sale) => sum + sale.totalAmount);
+
+    // Calcular gastos totales desde expenses
+    final totalExpenses = _expenseProvider.totalExpenses;
+
+    // Calcular balance total (ingresos - gastos)
+    final balanceTotal = totalSales - totalExpenses;
+
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(20),
@@ -133,7 +302,7 @@ class _BankingScreenState extends State<BankingScreen> {
           const SizedBox(height: 12),
           FittedBox(
             child: Text(
-              '\$45,320.50',
+              '\$${balanceTotal.toStringAsFixed(2)}',
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
@@ -144,10 +313,14 @@ class _BankingScreenState extends State<BankingScreen> {
           const SizedBox(height: 6),
           Row(
             children: [
-              Icon(Icons.arrow_upward, size: 14, color: Colors.greenAccent),
+              Icon(
+                balanceTotal >= 0 ? Icons.arrow_upward : Icons.arrow_downward,
+                size: 14,
+                color: balanceTotal >= 0 ? Colors.greenAccent : Colors.redAccent,
+              ),
               const SizedBox(width: 4),
               Text(
-                '+12.5% este mes',
+                balanceTotal >= 0 ? '+${((balanceTotal / (totalExpenses == 0 ? 1 : totalExpenses)) * 100).toStringAsFixed(1)}% este mes' : '${((balanceTotal / (totalExpenses == 0 ? 1 : totalExpenses)) * 100).toStringAsFixed(1)}% este mes',
                 style: TextStyle(
                   fontSize: 13,
                   color: Colors.white,
@@ -161,6 +334,16 @@ class _BankingScreenState extends State<BankingScreen> {
   }
 
   Widget _buildFinancialSummaryCards() {
+    // Calcular gastos totales reales usando el provider
+    final totalExpenses = _expenseProvider.totalExpenses;
+    final formattedExpenses = '\$${totalExpenses.toStringAsFixed(0)}';
+
+    // Calcular ventas con deuda (por cobrar)
+    final pendingSales = _salesProvider.sales.where((sale) => sale.hasDebt && !sale.isCompleted).toList();
+    final totalPending = pendingSales.fold<double>(0.0, (sum, sale) => sum + sale.totalAmount);
+    final pendingCount = pendingSales.length;
+
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
@@ -170,8 +353,8 @@ class _BankingScreenState extends State<BankingScreen> {
               icon: Icons.arrow_downward,
               iconColor: Colors.green,
               title: 'Por Cobrar',
-              amount: '\$12,850',
-              subtitle: '15 pendientes',
+              amount: '\$${totalPending.toStringAsFixed(0)}',
+              subtitle: '$pendingCount pendientes',
               gradient: LinearGradient(
                 colors: [Color(0xFF1B5E20), Color(0xFF4CAF50)],
                 begin: Alignment.topLeft,
@@ -183,12 +366,12 @@ class _BankingScreenState extends State<BankingScreen> {
           Expanded(
             child: _buildSummaryCard(
               icon: Icons.arrow_upward,
-              iconColor: Colors.orange,
+              iconColor: AppColors.primary,
               title: 'Por Pagar',
-              amount: '\$8,240',
-              subtitle: '8 pendientes',
+              amount: '\$${totalExpenses.toStringAsFixed(0)}',
+              subtitle: 'Gastos registrados',
               gradient: LinearGradient(
-                colors: [Color(0xFFE65100), Color(0xFFFF9800)],
+                colors: [AppColors.primary, AppColors.primary],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -200,7 +383,7 @@ class _BankingScreenState extends State<BankingScreen> {
               icon: Icons.receipt,
               iconColor: Colors.purple,
               title: 'Gastos',
-              amount: '\$5,680',
+              amount: formattedExpenses,
               subtitle: 'Este mes',
               gradient: LinearGradient(
                 colors: [Color(0xFF4A148C), Color(0xFF9C27B0)],
@@ -273,6 +456,130 @@ class _BankingScreenState extends State<BankingScreen> {
   }
 
   Widget _buildTeamBalanceSection() {
+    // Mostrar indicador de carga si está cargando
+    if (_teamBalanceProvider.isLoading) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Balance del Equipo',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Theme.of(context).textTheme.titleLarge?.color
+                        : Colors.black87,
+                  ),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pushNamed(context, AppRouter.teamBalance);
+                  },
+                  child: Text(
+                    'Ver todo',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Color(0xFF2196F3) // Azul primario en modo oscuro
+                          : Theme.of(context).primaryColor,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(20),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        Theme.of(context).primaryColor,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Cargando balances...',
+                    style: TextStyle(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Theme.of(context).textTheme.bodySmall?.color
+                          : Colors.black54,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final teamBalances = _teamBalanceProvider.teamBalances;
+
+    if (teamBalances.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Balance del Equipo',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Theme.of(context).textTheme.titleLarge?.color
+                        : Colors.black87,
+                  ),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pushNamed(context, AppRouter.teamBalance);
+                  },
+                  child: Text(
+                    'Ver todo',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Color(0xFF2196F3) // Azul primario en modo oscuro
+                          : Theme.of(context).primaryColor,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(20),
+              child: Text(
+                'No hay miembros del equipo registrados',
+                style: TextStyle(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Theme.of(context).textTheme.bodySmall?.color
+                      : Colors.black54,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
@@ -292,12 +599,16 @@ class _BankingScreenState extends State<BankingScreen> {
                 ),
               ),
               TextButton(
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.pushNamed(context, AppRouter.teamBalance);
+                },
                 child: Text(
                   'Ver todo',
                   style: TextStyle(
                     fontSize: 14,
-                    color: Theme.of(context).primaryColor,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Color(0xFF2196F3) // Azul primario en modo oscuro
+                        : Theme.of(context).primaryColor,
                   ),
                 ),
               ),
@@ -309,29 +620,22 @@ class _BankingScreenState extends State<BankingScreen> {
             child: ListView(
               scrollDirection: Axis.horizontal,
               physics: const BouncingScrollPhysics(),
-              children: [
-                _buildTeamMemberCard(
-                  name: 'María González',
-                  role: 'Administrador',
-                  amount: '\$15,200',
-                  change: '+2.5%',
-                  avatarColor: Colors.blue,
-                ),
-                _buildTeamMemberCard(
-                  name: 'Carlos Ruiz',
-                  role: 'Vendedor',
-                  amount: '\$12,850',
-                  change: '+1.8%',
-                  avatarColor: Colors.green,
-                ),
-                _buildTeamMemberCard(
-                  name: 'Ana López',
-                  role: 'Contadora',
-                  amount: '\$17,270',
-                  change: '+3.7%',
-                  avatarColor: Colors.purple,
-                ),
-              ],
+              children: teamBalances.take(3).map((member) {
+                // Calcular cambio porcentual (simulado por ahora)
+                final change = '+2.5%'; // TODO: Calcular cambio real basado en datos históricos
+
+                // Asignar colores basados en el índice
+                final colors = [Colors.blue, Colors.green, Colors.purple, Colors.orange, Colors.teal];
+                final colorIndex = teamBalances.indexOf(member) % colors.length;
+
+                return _buildTeamMemberCard(
+                  name: member.name,
+                  role: member.role,
+                  amount: '\$${member.balance.toStringAsFixed(0)}',
+                  change: change,
+                  avatarColor: colors[colorIndex],
+                );
+              }).toList(),
             ),
           ),
         ],
@@ -444,42 +748,23 @@ class _BankingScreenState extends State<BankingScreen> {
                 ),
               ),
               TextButton(
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.pushNamed(context, AppRouter.expenses);
+                },
                 child: Text(
                   'Ver todo',
                   style: TextStyle(
                     fontSize: 14,
-                    color: Theme.of(context).primaryColor,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Color(0xFF2196F3) // Azul primario en modo oscuro
+                        : Theme.of(context).primaryColor,
                   ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 16),
-          _buildExpenseItem(
-            icon: Icons.inventory,
-            iconColor: Colors.orange,
-            title: 'Inventario',
-            subtitle: 'Compra de productos',
-            amount: '-\$2,340',
-            date: 'Ayer',
-          ),
-          _buildExpenseItem(
-            icon: Icons.electrical_services,
-            iconColor: Colors.purple,
-            title: 'Servicios',
-            subtitle: 'Electricidad y agua',
-            amount: '-\$890',
-            date: '3 Oct',
-          ),
-          _buildExpenseItem(
-            icon: Icons.local_shipping,
-            iconColor: Colors.blue,
-            title: 'Transporte',
-            subtitle: 'Gasolina y mantenimiento',
-            amount: '-\$450',
-            date: '1 Oct',
-          ),
+          ..._buildRecentExpensesFromData(),
         ],
       ),
     );
@@ -568,6 +853,43 @@ class _BankingScreenState extends State<BankingScreen> {
   }
 
   Widget _buildPendingSection() {
+    // Obtener ventas pendientes reales
+    final pendingSales = _salesProvider.sales.where((sale) => sale.hasDebt && !sale.isCompleted).toList();
+
+    if (pendingSales.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Pendientes',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Theme.of(context).textTheme.titleLarge?.color
+                    : Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(20),
+              child: Text(
+                'No hay ventas pendientes',
+                style: TextStyle(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Theme.of(context).textTheme.bodySmall?.color
+                      : Colors.black54,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
@@ -584,27 +906,19 @@ class _BankingScreenState extends State<BankingScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          _buildPendingItem(
-            client: 'Cliente ABC Corp',
-            invoice: 'Factura #001234',
-            amount: '\$3,250',
-            dueDate: 'Vence: 15 Oct',
-            status: 'pending',
-          ),
-          _buildPendingItem(
-            client: 'Tienda XYZ',
-            invoice: 'Factura #001235',
-            amount: '\$1,890',
-            dueDate: 'Vencido: 2 días',
-            status: 'overdue',
-          ),
-          _buildPendingItem(
-            client: 'Empresa DEF',
-            invoice: 'Factura #001236',
-            amount: '\$7,710',
-            dueDate: 'Vence: 22 Oct',
-            status: 'pending',
-          ),
+          ...pendingSales.take(3).map((sale) {
+            // Calcular días de vencimiento (simulado)
+            final daysUntilDue = 7; // TODO: Calcular basado en fecha real de vencimiento
+            final isOverdue = daysUntilDue < 0;
+
+            return _buildPendingItem(
+              client: sale.customerName,
+              invoice: 'Factura #${sale.id.substring(0, 8).toUpperCase()}',
+              amount: '\$${sale.totalAmount.toStringAsFixed(0)}',
+              dueDate: isOverdue ? 'Vencido: ${daysUntilDue.abs()} días' : 'Vence: $daysUntilDue días',
+              status: isOverdue ? 'overdue' : 'pending',
+            );
+          }),
         ],
       ),
     );

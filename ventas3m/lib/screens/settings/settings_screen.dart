@@ -236,7 +236,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 )
               : Text(
                   activeProjectId != null
-                      ? _projects.firstWhere((p) => p.id == activeProjectId, orElse: () => Project(id: '', name: 'Desconocido', description: '', ownerId: '', createdAt: DateTime.now(), updatedAt: DateTime.now(), isActive: false, members: [])).name
+                      ? _projects.firstWhere((p) => p.id == activeProjectId, orElse: () => Project(id: '', name: 'Desconocido', description: '', ownerId: '', createdAt: DateTime.now(), updatedAt: DateTime.now(), isActive: false, members: [], providers: [])).name
                       : 'Ninguno seleccionado',
                   style: TextStyle(
                     fontSize: 14,

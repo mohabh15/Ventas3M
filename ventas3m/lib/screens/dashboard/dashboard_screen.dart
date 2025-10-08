@@ -4,6 +4,8 @@ import '../../core/theme/colors.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/gradient_app_bar.dart';
 import '../../models/sale.dart';
+import '../../models/sale_status.dart';
+import '../../models/payment_method.dart';
 import '../settings/settings_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -18,30 +20,57 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final List<Sale> recentSales = [
     Sale(
       id: 'VT-001234',
-      product: 'Producto A',
+      projectId: 'PROJ-001',
+      productId: 'Producto A',
+      sellerId: 'SELLER-001',
       quantity: 2,
       unitPrice: 122.50,
-      total: 245.00,
-      customer: 'Ana García',
-      date: DateTime.now().subtract(const Duration(hours: 2)),
+      totalAmount: 245.00,
+      customerName: 'Ana García',
+      saleDate: DateTime.now().subtract(const Duration(hours: 2)),
+      profit: 49.00,
+      paymentMethod: PaymentMethod.cash,
+      status: SaleStatus.completed,
+      notes: '',
+      createdAt: DateTime.now().subtract(const Duration(hours: 2)),
+      updatedAt: DateTime.now().subtract(const Duration(hours: 2)),
+      createdBy: 'SELLER-001',
     ),
     Sale(
       id: 'VT-001233',
-      product: 'Producto B',
+      projectId: 'PROJ-001',
+      productId: 'Producto B',
+      sellerId: 'SELLER-001',
       quantity: 1,
       unitPrice: 89.50,
-      total: 89.50,
-      customer: 'Carlos Méndez',
-      date: DateTime.now().subtract(const Duration(hours: 4)),
+      totalAmount: 89.50,
+      customerName: 'Carlos Méndez',
+      saleDate: DateTime.now().subtract(const Duration(hours: 4)),
+      profit: 17.90,
+      paymentMethod: PaymentMethod.card,
+      status: SaleStatus.completed,
+      notes: '',
+      createdAt: DateTime.now().subtract(const Duration(hours: 4)),
+      updatedAt: DateTime.now().subtract(const Duration(hours: 4)),
+      createdBy: 'SELLER-001',
     ),
     Sale(
       id: 'VT-001232',
-      product: 'Producto C',
+      projectId: 'PROJ-001',
+      productId: 'Producto C',
+      sellerId: 'SELLER-001',
       quantity: 3,
       unitPrice: 52.25,
-      total: 156.75,
-      customer: 'María López',
-      date: DateTime.now().subtract(const Duration(hours: 8)),
+      totalAmount: 156.75,
+      customerName: 'María López',
+      saleDate: DateTime.now().subtract(const Duration(hours: 8)),
+      profit: 31.35,
+      paymentMethod: PaymentMethod.transfer,
+      status: SaleStatus.completed,
+      notes: '',
+      createdAt: DateTime.now().subtract(const Duration(hours: 8)),
+      updatedAt: DateTime.now().subtract(const Duration(hours: 8)),
+      createdBy: 'SELLER-001',
     ),
   ];
 
@@ -305,9 +334,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Row(
         children: [
           CircleAvatar(
-            backgroundColor: _getAvatarColor(sale.customer),
+            backgroundColor: _getAvatarColor(sale.customerName),
             child: Text(
-              sale.customer.split(' ').map((name) => name[0]).join('').toUpperCase(),
+              sale.customerName.split(' ').map((name) => name[0]).join('').toUpperCase(),
               style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
@@ -328,7 +357,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ),
                 Text(
-                  sale.customer,
+                  sale.customerName,
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                     fontSize: 12,
@@ -341,7 +370,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                '\$${sale.total.toStringAsFixed(2)}',
+                '\$${sale.totalAmount.toStringAsFixed(2)}',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
@@ -349,7 +378,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
               Text(
-                DateFormat('HH:mm a').format(sale.date),
+                DateFormat('HH:mm a').format(sale.saleDate),
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                   fontSize: 12,
@@ -372,7 +401,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       const Color(0xFFEC4899),
     ];
 
-    int hash = customer.codeUnits.fold(0, (int sum, int char) => sum + char);
+    int hash = customer.codeUnits.fold(0, (int accumulator, int char) => accumulator + char);
     return colors[hash % colors.length];
   }
 }

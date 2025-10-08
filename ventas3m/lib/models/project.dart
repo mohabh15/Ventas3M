@@ -1,3 +1,5 @@
+import 'provider.dart';
+
 class Project {
   final String id;
   final String name;
@@ -7,6 +9,7 @@ class Project {
   final DateTime updatedAt;
   final bool isActive;
   final List<String> members;
+  final List<Provider> providers;
 
   Project({
     required this.id,
@@ -17,6 +20,7 @@ class Project {
     required this.updatedAt,
     required this.isActive,
     required this.members,
+    required this.providers,
   });
 
   factory Project.fromJson(Map<String, dynamic> json) {
@@ -28,7 +32,10 @@ class Project {
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
       isActive: json['isActive'] as bool,
-      members: List<String>.from(json['members'] as List<dynamic>),
+      members: List<String>.from(json['members'] as List<dynamic>? ?? []),
+      providers: (json['providers'] as List<dynamic>? ?? [])
+          .map((providerJson) => Provider.fromJson(providerJson as Map<String, dynamic>))
+          .toList(),
     );
   }
 
@@ -42,6 +49,7 @@ class Project {
       'updatedAt': updatedAt.toIso8601String(),
       'isActive': isActive,
       'members': members,
+      'providers': providers.map((provider) => provider.toJson()).toList(),
     };
   }
 }

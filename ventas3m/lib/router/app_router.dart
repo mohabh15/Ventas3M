@@ -7,6 +7,10 @@ import '../screens/profile/profile_screen.dart';
 import '../screens/settings/settings_screen.dart';
 import '../screens/sales/sales_screen.dart';
 import '../screens/products/products_screen.dart';
+import '../screens/expenses/expenses_screen.dart';
+import '../screens/expenses/add_edit_expense_modal.dart';
+import '../screens/banking/team_balance_screen.dart';
+import '../models/expense.dart';
 
 class AppRouter {
   static const String login = '/login';
@@ -17,6 +21,10 @@ class AppRouter {
   static const String settings = '/settings';
   static const String sales = '/sales';
   static const String products = '/products';
+  static const String expenses = '/expenses';
+  static const String addExpense = '/add-expense';
+  static const String editExpense = '/edit-expense';
+  static const String teamBalance = '/team-balance';
 
   static Map<String, WidgetBuilder> get routes => {
     login: (context) => const LoginScreen(),
@@ -27,5 +35,11 @@ class AppRouter {
     settings: (context) => const SettingsScreen(),
     sales: (context) => const SalesScreen(),
     products: (context) => const ProductsScreen(),
+    expenses: (context) => const ExpensesScreen(),
+    addExpense: (context) => const AddEditExpenseModal(),
+    editExpense: (context) => AddEditExpenseModal(
+      expense: ModalRoute.of(context)?.settings.arguments as Expense?,
+    ),
+    teamBalance: (context) => const TeamBalanceScreen(),
   };
 }

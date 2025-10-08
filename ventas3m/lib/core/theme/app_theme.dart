@@ -320,7 +320,7 @@ class AppTheme {
 
       surface: AppDarkColors.surface,
       onSurface: AppDarkColors.textPrimary,
-      surfaceContainerHighest: AppDarkColors.surfaceVariant,
+      surfaceContainerHighest: Color(0xFF2A2A2A), // Superficie variante más clara para mejor contraste
       onSurfaceVariant: AppDarkColors.textSecondary,
 
       outline: AppDarkColors.border,
@@ -356,7 +356,7 @@ class AppTheme {
 
     // Tarjetas oscuras
     cardTheme: CardThemeData(
-      color: AppDarkColors.cardBackground,
+      color: Color(0xFF242424), // Fondo tarjeta más claro para mejor contraste
       elevation: 4,
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(
@@ -482,8 +482,8 @@ class AppTheme {
       ),
     ),
 
-    // Fondo oscuro
-    scaffoldBackgroundColor: AppDarkColors.background,
+    // Fondo oscuro - Mejor contraste
+    scaffoldBackgroundColor: Color(0xFF121212), // Fondo gris oscuro más suave
 
     // Divisor oscuro
     dividerTheme: const DividerThemeData(

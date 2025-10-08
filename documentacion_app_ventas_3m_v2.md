@@ -1379,10 +1379,10 @@ lib/
 
 #### Semana 9-10: Sistema de Autenticación
 - [X] Implementar Firebase Authentication Google
-- [ ] Crear flujo de registro y login seguro
+- [X] Crear flujo de registro y login seguro
 - [ ] Desarrollar recuperación de contraseñas
-- [ ] Implementar manejo de sesiones y tokens
-- [ ] Crear middleware de autenticación
+- [X] Implementar manejo de sesiones y tokens
+- [X] Crear middleware de autenticación
 - [ ] Desarrollar validación de formularios
 
 #### Semana 11-12: Gestión de Usuarios
@@ -1391,7 +1391,7 @@ lib/
 - [ ] Desarrollar pantalla de gestión de cuenta
 - [ ] Implementar notificaciones push básicas
 - [ ] Crear sistema de preferencias de usuario
-- [ ] Desarrollar logout y manejo de sesiones
+- [X] Desarrollar logout y manejo de sesiones
 
 ### Fase 3: Gestión de Proyectos (3 semanas)
 
@@ -1410,6 +1410,7 @@ lib/
 - [ ] Implementar roles básicos por proyecto
 - [ ] Crear sistema de invitaciones a proyectos
 - [ ] Desarrollar backup básico por proyecto
+- [ ] Desarollar gestion de los proveedores del proyecto
 
 ### Fase 4: Funcionalidades de Ventas (6 semanas)
 
@@ -1423,18 +1424,18 @@ lib/
 - [ ] Desarrollar búsqueda y filtros de productos
 
 #### Semana 20-22: Sistema de Ventas
-- [ ] Implementar modelo de datos Sale
+- [X] Implementar modelo de datos Sale
 - [X] Crear pantalla de registro de ventas
-- [ ] Desarrollar formulario de nueva venta
-- [ ] Implementar cálculo automático de beneficios
-- [ ] Crear sistema de deudas básico
-- [ ] Desarrollar historial de ventas
+- [x] Desarrollar formulario de nueva venta
+- [X] Implementar cálculo automático de beneficios
+- [X] Desarrollar historial de ventas
 
 #### Semana 23-24: Gestión Financiera
-- [ ] Implementar modelo de datos Expense
-- [ ] Crear pantalla de gestión de gastos
-- [ ] Desarrollar formulario de registro de gastos
-- [ ] Implementar categorización de gastos
+- [X] Implementar modelo de datos Expense
+- [X] Crear pantalla de gestión de gastos
+- [X] Desarrollar formulario de registro de gastos
+- [X] Implementar categorización de gastos
+- [ ] Crear sistema de deudas 
 - [ ] Crear reportes financieros básicos
 - [ ] Desarrollar KPIs iniciales
 
@@ -1473,6 +1474,35 @@ lib/
 - [ ] Implementar mejoras de rendimiento
 - [ ] Desarrollar actualizaciones menores
 - [ ] Planificar siguiente versión mayor
+
+
+
+Pendientes
+
+- arreglar error de ui/logica al eliminar producto
+- añadir gestion de proyecto: proveedores... -> añadir la funcionalidad de guardar los proveedores
+- Cambiar colores ui card ventas igual card productos
+- añadir boton + en linea con miembros del equipo (balances) para añadir cuenta balances
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ## 8. Seguridad y Cumplimiento
 

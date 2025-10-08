@@ -5,6 +5,7 @@ import '../../services/auth_service.dart';
 import '../../models/project.dart';
 import '../../providers/settings_provider.dart';
 import '../../core/widgets/gradient_app_bar.dart';
+import 'edit_project_modal.dart';
 
 class ManagementScreen extends StatefulWidget {
   const ManagementScreen({super.key});
@@ -93,30 +94,41 @@ class _ManagementScreenState extends State<ManagementScreen> {
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          Text(
-                                            project.name,
-                                            style: const TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 8),
-                                          Text(project.description),
-                                          const SizedBox(height: 16),
                                           Row(
-                                            mainAxisAlignment: MainAxisAlignment.end,
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
-                                              IconButton(
-                                                icon: const Icon(Icons.edit),
-                                                onPressed: () => _showEditProjectDialog(project),
+                                              Expanded(
+                                                child: Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      project.name,
+                                                      style: const TextStyle(
+                                                        fontSize: 18,
+                                                        fontWeight: FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(height: 8),
+                                                    Text(project.description),
+                                                  ],
+                                                ),
                                               ),
-                                              IconButton(
-                                                icon: const Icon(Icons.delete),
-                                                onPressed: () => _deleteProject(project.id),
-                                              ),
-                                              IconButton(
-                                                icon: const Icon(Icons.people),
-                                                onPressed: () => _showManageUsersDialog(project),
+                                              Row(
+                                                children: [
+                                                  IconButton(
+                                                    icon: const Icon(Icons.edit),
+                                                    onPressed: () => _showEditProjectDialog(project),
+                                                  ),
+                                                  IconButton(
+                                                    icon: const Icon(Icons.delete),
+                                                    onPressed: () => _deleteProject(project.id),
+                                                  ),
+                                                  IconButton(
+                                                    icon: const Icon(Icons.people),
+                                                    onPressed: () => _showManageUsersDialog(project),
+                                                  ),
+                                                ],
                                               ),
                                             ],
                                           ),
@@ -207,6 +219,7 @@ class _ManagementScreenState extends State<ManagementScreen> {
                 updatedAt: DateTime.now(),
                 isActive: true,
                 members: [currentUser.email ?? ''],
+                providers: [],
               );
               await _firebaseService.createProject(project);
               if(context.mounted) Navigator.of(context).pop();
@@ -220,52 +233,15 @@ class _ManagementScreenState extends State<ManagementScreen> {
   }
 
   void _showEditProjectDialog(Project project) {
-    final nameController = TextEditingController(text: project.name);
-    final descriptionController = TextEditingController(text: project.description);
-
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Editar Proyecto'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(labelText: 'Nombre'),
-            ),
-            TextField(
-              controller: descriptionController,
-              decoration: const InputDecoration(labelText: 'Descripción'),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final updatedProject = Project(
-                id: project.id,
-                name: nameController.text,
-                description: descriptionController.text,
-                ownerId: project.ownerId,
-                createdAt: project.createdAt,
-                updatedAt: DateTime.now(),
-                isActive: project.isActive,
-                members: project.members,
-              );
-              await _firebaseService.updateProject(updatedProject);
-              if(context.mounted) Navigator.of(context).pop();
-              _loadProjects();
-            },
-            child: const Text('Guardar'),
-          ),
-        ],
-      ),
-    );
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => EditProjectModal(project: project),
+    ).then((_) {
+      // Recargar proyectos después de cerrar el modal
+      _loadProjects();
+    });
   }
 
   void _deleteProject(String projectId) async {

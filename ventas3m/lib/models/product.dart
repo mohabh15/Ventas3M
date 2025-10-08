@@ -114,4 +114,30 @@ class ProductStock {
       'projectId': projectId,
     };
   }
+
+  ProductStock copyWith({
+    String? id,
+    String? productId,
+    int? quantity,
+    String? responsibleId,
+    String? providerId,
+    double? price,
+    DateTime? purchaseDate,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    String? projectId,
+  }) {
+    return ProductStock(
+      id: id ?? this.id,
+      productId: productId ?? this.productId,
+      quantity: quantity ?? this.quantity,
+      responsibleId: responsibleId ?? this.responsibleId,
+      providerId: providerId ?? this.providerId,
+      price: price ?? this.price,
+      purchaseDate: purchaseDate ?? this.purchaseDate,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      projectId: projectId ?? this.projectId,
+    );
+  }
 }

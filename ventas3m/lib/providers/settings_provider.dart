@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsProvider extends ChangeNotifier {
@@ -97,7 +97,11 @@ class SettingsProvider extends ChangeNotifier {
       // Cargar active project id
       _activeProjectId = prefs.getString(_activeProjectIdKey);
 
-      notifyListeners();
+      // Notificar cambios después de que el frame esté construido para evitar
+      // problemas de setState() durante build en otros providers
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        notifyListeners();
+      });
     } catch (e) {
       debugPrint('Error loading settings: $e');
       // En caso de error, mantener valores por defecto

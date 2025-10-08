@@ -9,7 +9,6 @@ import '../../models/product.dart';
 import '../../models/payment_method.dart';
 import '../../models/sale_status.dart';
 import '../../core/widgets/gradient_app_bar.dart';
-import '../../services/auth_service.dart';
 import 'add_sale_modal.dart';
 import 'sale_details_modal.dart';
 
@@ -347,10 +346,7 @@ class _SalesScreenState extends State<SalesScreen> {
       },
     );
 
-    // Verificar que el widget esté montado antes de continuar
-    if (!mounted) return;
-
-    if (result != null) {
+    if (result != null && mounted) {
       // Crear objeto Sale desde el mapa
       final newSale = result['sale'] as Sale?;
       if (newSale != null) {
@@ -373,9 +369,6 @@ class _SalesScreenState extends State<SalesScreen> {
               ),
             ).name;
 
-            // Verificación adicional justo antes de usar el contexto
-            if (!mounted) return;
-
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('Venta de $productName guardada exitosamente'),
@@ -389,13 +382,7 @@ class _SalesScreenState extends State<SalesScreen> {
     }
   }
 
-  void _showSaleDetailsModal(BuildContext context, Sale sale) async {
-    // Verificar que el widget esté montado antes de continuar
-    if (!mounted) return;
-
-    // Verificar que el widget esté montado antes de usar el contexto
-    if (!mounted) return;
-
+  void _showSaleDetailsModal(BuildContext context, Sale sale) {
     // Obtener información del producto
     final productsProvider = Provider.of<ProductsProvider>(context, listen: false);
     final product = productsProvider.products.firstWhere(
@@ -412,39 +399,19 @@ class _SalesScreenState extends State<SalesScreen> {
       ),
     );
 
-    // Obtener información del usuario que creó la venta
-    String createdByName = 'Usuario desconocido';
-    try {
-      final authService = AuthService();
-      final user = await authService.getUserById(sale.createdBy);
-      createdByName = user?.name ?? sale.createdBy;
-    } catch (e) {
-      // Si hay error, usar el ID como fallback
-      createdByName = sale.createdBy;
-    }
-
-    // Verificar nuevamente que el widget esté montado antes de usar el contexto
-    if (!mounted) return;
-
-    // Verificación adicional justo antes de usar el contexto
-    if (!mounted) return;
-
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (BuildContext context) {
         return Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? Colors.grey[900]
-                : Colors.white,
+          decoration: const BoxDecoration(
+            color: Colors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           ),
           child: SaleDetailsModal(
             sale: sale,
             product: product,
-            createdByName: createdByName,
           ),
         );
       },
