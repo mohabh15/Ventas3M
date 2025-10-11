@@ -12,14 +12,24 @@ class _AddProductModalState extends State<AddProductModal> {
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _priceController = TextEditingController();
-  final _categoryController = TextEditingController();
+  String? _selectedCategory;
+
+  static const List<String> predefinedCategories = [
+    'Electrónica',
+    'Ropa',
+    'Alimentos',
+    'Hogar',
+    'Deportes',
+    'Libros',
+    'Juguetes',
+    'Salud y Belleza',
+  ];
 
   @override
   void dispose() {
     _nameController.dispose();
     _descriptionController.dispose();
     _priceController.dispose();
-    _categoryController.dispose();
     super.dispose();
   }
 
@@ -161,12 +171,17 @@ class _AddProductModalState extends State<AddProductModal> {
                     ),
                     const SizedBox(width: 16),
                     Expanded(
-                      child: TextFormField(
-                        controller: _categoryController,
-                        style: TextStyle(color: theme.colorScheme.onSurface),
+                      child: DropdownButtonFormField<String>(
+                        value: _selectedCategory,
+                        isExpanded: true,
+                        items: predefinedCategories.map((category) => DropdownMenuItem(
+                          value: category,
+                          child: Text(category, style: TextStyle(color: theme.colorScheme.onSurface)),
+                        )).toList(),
+                        onChanged: (value) => setState(() => _selectedCategory = value),
                         decoration: InputDecoration(
                           labelText: 'Categoría',
-                          hintText: 'Ej: Electrónica',
+                          hintText: 'Seleccione una categoría',
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -184,7 +199,7 @@ class _AddProductModalState extends State<AddProductModal> {
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Por favor ingrese una categoría';
+                            return 'Por favor seleccione una categoría';
                           }
                           return null;
                         },
@@ -250,7 +265,7 @@ class _AddProductModalState extends State<AddProductModal> {
         'name': _nameController.text,
         'description': _descriptionController.text,
         'basePrice': double.parse(_priceController.text),
-        'category': _categoryController.text,
+        'category': _selectedCategory!,
       };
       Navigator.of(context).pop(productData);
     }

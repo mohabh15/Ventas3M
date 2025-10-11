@@ -13,6 +13,7 @@ import 'providers/product_stock_provider.dart';
 import 'providers/expense_provider.dart';
 import 'providers/debt_provider.dart';
 import 'providers/team_balance_provider.dart';
+import 'providers/navigation_provider.dart';
 import 'core/theme/responsive_theme.dart';
 import 'widgets/auth_wrapper.dart';
 import 'router/app_router.dart';
@@ -31,6 +32,8 @@ Future<void> main() async {
         StreamProvider.value(value: FirebaseAuth.instance.authStateChanges() , initialData: null),
         // SettingsProvider debe ir primero ya que otros providers pueden depender de él
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
+        // NavigationProvider para gestionar la navegación
+        ChangeNotifierProvider(create: (_) => NavigationProvider()),
         // ThemeProvider va segundo y se conecta con SettingsProvider
         ChangeNotifierProvider(create: (context) {
           final themeProvider = ThemeProvider();

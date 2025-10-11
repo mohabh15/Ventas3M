@@ -24,6 +24,12 @@ class SalesScreen extends StatefulWidget {
 class _SalesScreenState extends State<SalesScreen> {
   final Set<String> _deletingSaleIds = {}; // Track sales being deleted
 
+  // Variables para búsqueda y filtros
+  String _searchQuery = '';
+  SaleStatus? _selectedStatus;
+  PaymentMethod? _selectedPaymentMethod;
+  DateTimeRange? _selectedDateRange;
+
   @override
   void initState() {
     super.initState();
@@ -49,6 +55,49 @@ class _SalesScreenState extends State<SalesScreen> {
     });
     // No cargar datos automáticamente en cambios de proyecto
     // Los datos se cargarán cuando el usuario interactúe con la pantalla
+  }
+
+  /// Función auxiliar para obtener el nombre del producto
+  String _getProductName(String productId) {
+    final product = Provider.of<ProductsProvider>(context, listen: false).products.firstWhere(
+      (product) => product.id == productId,
+      orElse: () => Product(
+        id: productId,
+        name: productId, // Fallback al ID si no se encuentra
+        description: '',
+        basePrice: 0,
+        category: '',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        projectId: '',
+      ),
+    );
+    return product.name;
+  }
+
+  /// Función para filtrar ventas según búsqueda y filtros aplicados
+  List<Sale> _getFilteredSales(List<Sale> sales) {
+    return sales.where((sale) {
+      // Filtro por búsqueda
+      if (_searchQuery.isNotEmpty) {
+        final productName = _getProductName(sale.productId).toLowerCase();
+        if (!productName.contains(_searchQuery.toLowerCase())) return false;
+      }
+
+      // Filtro por estado
+      if (_selectedStatus != null && sale.status != _selectedStatus) return false;
+
+      // Filtro por método de pago
+      if (_selectedPaymentMethod != null && sale.paymentMethod != _selectedPaymentMethod) return false;
+
+      // Filtro por rango de fechas
+      if (_selectedDateRange != null) {
+        final saleDate = DateTime(sale.saleDate.year, sale.saleDate.month, sale.saleDate.day);
+        if (saleDate.isBefore(_selectedDateRange!.start) || saleDate.isAfter(_selectedDateRange!.end)) return false;
+      }
+
+      return true;
+    }).toList();
   }
 
   /// Carga datos de ventas solo cuando sea necesario (lazy loading)
@@ -91,6 +140,16 @@ class _SalesScreenState extends State<SalesScreen> {
     return Scaffold(
       appBar: GradientAppBar(
         title: 'Ventas',
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search, color: Colors.white),
+            onPressed: _showSearchModal,
+          ),
+          IconButton(
+            icon: const Icon(Icons.filter_list, color: Colors.white),
+            onPressed: _showFilterModal,
+          ),
+        ],
       ),
       body: Stack(
         children: [
@@ -108,25 +167,8 @@ class _SalesScreenState extends State<SalesScreen> {
                       }
                     });
                     final allSales = salesProvider.sales;
-                    final sales = allSales.where((sale) => !_deletingSaleIds.contains(sale.id)).toList();
-
-                    // Función auxiliar para obtener el nombre del producto
-                    String getProductName(String productId) {
-                      final product = productsProvider.products.firstWhere(
-                        (product) => product.id == productId,
-                        orElse: () => Product(
-                          id: productId,
-                          name: productId, // Fallback al ID si no se encuentra
-                          description: '',
-                          basePrice: 0,
-                          category: '',
-                          createdAt: DateTime.now(),
-                          updatedAt: DateTime.now(),
-                          projectId: '',
-                        ),
-                      );
-                      return product.name;
-                    }
+                    final unfilteredSales = allSales.where((sale) => !_deletingSaleIds.contains(sale.id)).toList();
+                    final sales = _getFilteredSales(unfilteredSales);
 
                     return sales.isEmpty && allSales.isEmpty
                       ? Center(
@@ -168,7 +210,7 @@ class _SalesScreenState extends State<SalesScreen> {
                           itemCount: sales.length,
                           itemBuilder: (context, index) {
                             final sale = sales[index];
-                            return _buildSaleCard(context, sale, getProductName(sale.productId));
+                            return _buildSaleCard(context, sale, _getProductName(sale.productId));
                           },
                         );
                   },
@@ -598,6 +640,200 @@ class _SalesScreenState extends State<SalesScreen> {
         });
       }
     }
+  }
+
+  void _showSearchModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.grey[900]
+                : Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+            left: 16,
+            right: 16,
+            top: 16,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Buscar Ventas',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                autofocus: true,
+                controller: TextEditingController(text: _searchQuery),
+                decoration: const InputDecoration(
+                  hintText: 'Buscar por nombre de producto...',
+                  prefixIcon: Icon(Icons.search),
+                  border: OutlineInputBorder(),
+                ),
+                onChanged: (value) {
+                  setState(() {
+                    _searchQuery = value;
+                  });
+                },
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _searchQuery = '';
+                      });
+                      Navigator.pop(context);
+                    },
+                    child: const Text('Limpiar'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Buscar'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showFilterModal() async {
+    // Variables temporales para el modal
+    SaleStatus? tempStatus = _selectedStatus;
+    PaymentMethod? tempPaymentMethod = _selectedPaymentMethod;
+    DateTimeRange? tempDateRange = _selectedDateRange;
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Container(
+              decoration: BoxDecoration(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.grey[900]
+                    : Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              ),
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Filtrar Ventas',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 16),
+                  // Filtro por estado
+                  Text('Estado:', style: TextStyle(fontWeight: FontWeight.w500)),
+                  DropdownButton<SaleStatus>(
+                    value: tempStatus,
+                    isExpanded: true,
+                    hint: const Text('Seleccionar estado'),
+                    items: SaleStatus.values.map((status) {
+                      return DropdownMenuItem(
+                        value: status,
+                        child: Text(status.displayName),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setModalState(() {
+                        tempStatus = value;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  // Filtro por método de pago
+                  Text('Método de Pago:', style: TextStyle(fontWeight: FontWeight.w500)),
+                  DropdownButton<PaymentMethod>(
+                    value: tempPaymentMethod,
+                    isExpanded: true,
+                    hint: const Text('Seleccionar método'),
+                    items: PaymentMethod.values.map((method) {
+                      return DropdownMenuItem(
+                        value: method,
+                        child: Text(method.displayName),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setModalState(() {
+                        tempPaymentMethod = value;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  // Filtro por rango de fechas
+                  Text('Rango de Fechas:', style: TextStyle(fontWeight: FontWeight.w500)),
+                  ElevatedButton(
+                    onPressed: () async {
+                      final picked = await showDateRangePicker(
+                        context: context,
+                        firstDate: DateTime(2020),
+                        lastDate: DateTime.now(),
+                        initialDateRange: tempDateRange,
+                      );
+                      if (picked != null) {
+                        setModalState(() {
+                          tempDateRange = picked;
+                        });
+                      }
+                    },
+                    child: Text(
+                      tempDateRange != null
+                          ? '${DateFormat('dd/MM/yyyy').format(tempDateRange!.start)} - ${DateFormat('dd/MM/yyyy').format(tempDateRange!.end)}'
+                          : 'Seleccionar rango',
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () {
+                          setState(() {
+                            _selectedStatus = null;
+                            _selectedPaymentMethod = null;
+                            _selectedDateRange = null;
+                          });
+                          Navigator.pop(context);
+                        },
+                        child: const Text('Limpiar Filtros'),
+                      ),
+                      ElevatedButton(
+                        onPressed: () {
+                          setState(() {
+                            _selectedStatus = tempStatus;
+                            _selectedPaymentMethod = tempPaymentMethod;
+                            _selectedDateRange = tempDateRange;
+                          });
+                          Navigator.pop(context);
+                        },
+                        child: const Text('Aplicar'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   void _showSaleDetailsModal(Sale sale) async {

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../core/theme/colors.dart';
+import '../providers/navigation_provider.dart';
 import '../screens/dashboard/dashboard_screen.dart';
 import '../screens/sales/sales_screen.dart';
 import '../screens/products/products_screen.dart';
@@ -13,7 +15,6 @@ class NavBar extends StatefulWidget {
 }
 
 class NavBarState extends State<NavBar> {
-  int _selectedIndex = 0;
   static const List<Widget> _widgetOptions = <Widget>[
     DashboardScreen(),
     SalesScreen(),
@@ -21,23 +22,22 @@ class NavBarState extends State<NavBar> {
     BankingScreen(),
   ];
 
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
+  void _onItemTapped(BuildContext context, int index) {
+    Provider.of<NavigationProvider>(context, listen: false).setSelectedIndex(index);
   }
 
   @override
   Widget build(BuildContext context) {
     // Obtiene el padding de la zona segura inferior del dispositivo
     final bottomPadding = MediaQuery.of(context).padding.bottom;
-    return Scaffold(
-      extendBody: true,
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: _widgetOptions,
-      ),
-      bottomNavigationBar: Padding(
+    return Consumer<NavigationProvider>(
+      builder: (context, navProvider, child) => Scaffold(
+        extendBody: true,
+        body: IndexedStack(
+          index: navProvider.selectedIndex,
+          children: _widgetOptions,
+        ),
+        bottomNavigationBar: Padding(
         // Utiliza el padding inferior del sistema
         padding: EdgeInsets.only(
           left: 15,
@@ -47,7 +47,7 @@ class NavBarState extends State<NavBar> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           decoration: BoxDecoration(
-            color: AppColors.surface.withValues(alpha: 0.1),
+            color: AppColors.surface.withValues(alpha: 0.2),
             borderRadius: BorderRadius.circular(30),
             boxShadow: [
               BoxShadow(
@@ -61,22 +61,23 @@ class NavBarState extends State<NavBar> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildNavItem(0, Icons.home_rounded, 'Dashboard'),
-              _buildNavItem(1, Icons.bar_chart_rounded, 'Ventas'),
-              _buildNavItem(2, Icons.inventory_2_rounded, 'Productos'),
-              _buildNavItem(3, Icons.account_balance, 'Banca'),
+              _buildNavItem(context, 0, Icons.home_rounded, 'Dashboard'),
+              _buildNavItem(context, 1, Icons.bar_chart_rounded, 'Ventas'),
+              _buildNavItem(context, 2, Icons.inventory_2_rounded, 'Productos'),
+              _buildNavItem(context, 3, Icons.account_balance, 'Banca'),
             ],
           ),
         ),
       ),
+    )
     );
   }
 
-  Widget _buildNavItem(int index, IconData icon, String label) {
-    final isSelected = _selectedIndex == index;
+  Widget _buildNavItem(BuildContext context, int index, IconData icon, String label) {
+    final isSelected = Provider.of<NavigationProvider>(context).selectedIndex == index;
 
     return GestureDetector(
-      onTap: () => _onItemTapped(index),
+      onTap: () => _onItemTapped(context, index),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,

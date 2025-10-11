@@ -6,8 +6,12 @@ import '../../core/widgets/app_card.dart';
 import '../../core/widgets/gradient_app_bar.dart';
 import '../../core/widgets/loading_widget.dart';
 import '../../models/sale.dart';
+import '../../models/product.dart';
 import '../../providers/sales_provider.dart';
 import '../../providers/settings_provider.dart';
+import '../../providers/products_provider.dart';
+import '../../providers/navigation_provider.dart';
+import '../../services/auth_service.dart';
 import '../settings/settings_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -232,7 +236,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ),
                   TextButton(
-                    onPressed: () {},
+                    onPressed: () => Provider.of<NavigationProvider>(context, listen: false).setSelectedIndex(1),
                     child: Text(
                       'Ver todas',
                       style: TextStyle(
@@ -243,14 +247,43 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-              Consumer<SalesProvider>(
-                builder: (context, salesProvider, child) {
+              Consumer2<SalesProvider, ProductsProvider>(
+                builder: (context, salesProvider, productsProvider, child) {
                   // Trigger lazy loading when screen is accessed
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     if (mounted) {
                       _ensureSalesDataLoaded();
                     }
                   });
+
+                  // Función auxiliar para obtener el nombre del producto
+                  String getProductName(String productId) {
+                    final product = productsProvider.products.firstWhere(
+                      (product) => product.id == productId,
+                      orElse: () => Product(
+                        id: productId,
+                        name: productId, // Fallback al ID si no se encuentra
+                        description: '',
+                        basePrice: 0,
+                        category: '',
+                        createdAt: DateTime.now(),
+                        updatedAt: DateTime.now(),
+                        projectId: '',
+                      ),
+                    );
+                    return product.name;
+                  }
+
+                  // Función auxiliar para obtener el nombre del vendedor
+                  Future<String> getSellerName(String sellerId) async {
+                    try {
+                      final user = await AuthService().getUserById(sellerId);
+                      return user?.name ?? sellerId;
+                    } catch (e) {
+                      return sellerId;
+                    }
+                  }
+
                   if (salesProvider.isLoading) {
                     return const LoadingWidget();
                   }
@@ -327,7 +360,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   }
 
                   return Column(
-                    children: recentSales.map((sale) => _buildRecentSaleCard(sale)).toList(),
+                    children: recentSales.map((sale) => FutureBuilder<String>(
+                      future: getSellerName(sale.sellerId),
+                      builder: (context, snapshot) {
+                        final sellerName = snapshot.data ?? sale.sellerId;
+                        return _buildRecentSaleCard(sale, getProductName(sale.productId), sellerName);
+                      },
+                    )).toList(),
                   );
                 },
               ),
@@ -424,7 +463,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildRecentSaleCard(Sale sale) {
+  Widget _buildRecentSaleCard(Sale sale, String productName, String sellerName) {
     return AppCard(
       backgroundColor: Theme.of(context).colorScheme.surface,
       margin: const EdgeInsets.only(bottom: 8),
@@ -447,7 +486,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '#${sale.id}',
+                  productName,
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
@@ -455,7 +494,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ),
                 Text(
-                  sale.customerName,
+                  sellerName,
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                     fontSize: 12,
@@ -468,11 +507,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                '\$${sale.totalAmount.toStringAsFixed(2)}',
+                '\$${sale.profit.toStringAsFixed(2)}',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
-                  color: Theme.of(context).colorScheme.onSurface,
+                  color: Colors.green,
                 ),
               ),
               Text(

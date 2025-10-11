@@ -20,9 +20,53 @@ class ProductsScreen extends StatefulWidget {
 }
 
 class _ProductsScreenState extends State<ProductsScreen> {
+  // Variables para búsqueda y filtros
+  String _searchQuery = '';
+  String? _selectedCategory;
+  String? _selectedStockStatus; // 'disponible', 'bajo', 'agotado'
+
   @override
   void initState() {
     super.initState();
+  }
+
+  /// Método para obtener el stock del producto
+  int _getProductStock(String productId) {
+    final stockProvider = Provider.of<ProductStockProvider>(context, listen: false);
+    final stock = stockProvider.getTotalStockForProduct(productId);
+    return stock;
+  }
+
+  /// Método para obtener el estado del stock
+  String _getStockStatus(int stock) {
+    if (stock == 0) return 'agotado';
+    if (stock <= 5) return 'bajo';
+    return 'disponible';
+  }
+
+  /// Función para filtrar productos según búsqueda y filtros aplicados
+  List<Product> _getFilteredProducts(List<Product> products) {
+    return products.where((product) {
+      // Filtro por búsqueda
+      if (_searchQuery.isNotEmpty) {
+        if (!product.name.toLowerCase().contains(_searchQuery.toLowerCase()) &&
+            !product.description.toLowerCase().contains(_searchQuery.toLowerCase())) {
+          return false;
+        }
+      }
+
+      // Filtro por categoría
+      if (_selectedCategory != null && product.category != _selectedCategory) return false;
+
+      // Filtro por estado de stock
+      if (_selectedStockStatus != null) {
+        final stock = _getProductStock(product.id);
+        final status = _getStockStatus(stock);
+        if (status != _selectedStockStatus) return false;
+      }
+
+      return true;
+    }).toList();
   }
 
   @override
@@ -34,6 +78,16 @@ class _ProductsScreenState extends State<ProductsScreen> {
     return Scaffold(
       appBar: GradientAppBar(
         title: 'Productos',
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search, color: Colors.white),
+            onPressed: _showSearchModal,
+          ),
+          IconButton(
+            icon: const Icon(Icons.filter_list, color: Colors.white),
+            onPressed: _showFilterModal,
+          ),
+        ],
       ),
       body: Stack(
         children: [
@@ -44,7 +98,8 @@ class _ProductsScreenState extends State<ProductsScreen> {
               Expanded(
                 child: Consumer<ProductsProvider>(
                   builder: (context, productsProvider, child) {
-                    final products = productsProvider.products;
+                    final allProducts = productsProvider.products;
+                    final products = _getFilteredProducts(allProducts);
                     final isLoading = productsProvider.isLoading;
                     final error = productsProvider.error;
 
@@ -315,6 +370,182 @@ class _ProductsScreenState extends State<ProductsScreen> {
         }
       });
     }
+  }
+
+  void _showSearchModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.grey[900]
+                : Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+            left: 16,
+            right: 16,
+            top: 16,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Buscar Productos',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                autofocus: true,
+                controller: TextEditingController(text: _searchQuery),
+                decoration: const InputDecoration(
+                  hintText: 'Buscar por nombre o descripción...',
+                  prefixIcon: Icon(Icons.search),
+                  border: OutlineInputBorder(),
+                ),
+                onChanged: (value) {
+                  setState(() {
+                    _searchQuery = value;
+                  });
+                },
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _searchQuery = '';
+                      });
+                      Navigator.pop(context);
+                    },
+                    child: const Text('Limpiar'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Buscar'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showFilterModal() async {
+    // Obtener categorías únicas
+    final productsProvider = Provider.of<ProductsProvider>(context, listen: false);
+    final categories = productsProvider.products
+        .map((p) => p.category)
+        .where((c) => c.isNotEmpty)
+        .toSet()
+        .toList()
+      ..sort();
+
+    // Variables temporales
+    String? tempCategory = _selectedCategory;
+    String? tempStockStatus = _selectedStockStatus;
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Container(
+              decoration: BoxDecoration(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.grey[900]
+                    : Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              ),
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Filtrar Productos',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 16),
+                  // Filtro por categoría
+                  Text('Categoría:', style: TextStyle(fontWeight: FontWeight.w500)),
+                  DropdownButton<String>(
+                    value: tempCategory,
+                    isExpanded: true,
+                    hint: const Text('Seleccionar categoría'),
+                    items: categories.map((category) {
+                      return DropdownMenuItem(
+                        value: category,
+                        child: Text(category),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setModalState(() {
+                        tempCategory = value;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  // Filtro por estado de stock
+                  Text('Estado de Stock:', style: TextStyle(fontWeight: FontWeight.w500)),
+                  DropdownButton<String>(
+                    value: tempStockStatus,
+                    isExpanded: true,
+                    hint: const Text('Seleccionar estado'),
+                    items: const [
+                      DropdownMenuItem(value: 'disponible', child: Text('En Stock')),
+                      DropdownMenuItem(value: 'bajo', child: Text('Stock Bajo')),
+                      DropdownMenuItem(value: 'agotado', child: Text('Agotado')),
+                    ],
+                    onChanged: (value) {
+                      setModalState(() {
+                        tempStockStatus = value;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () {
+                          setState(() {
+                            _selectedCategory = null;
+                            _selectedStockStatus = null;
+                          });
+                          Navigator.pop(context);
+                        },
+                        child: const Text('Limpiar Filtros'),
+                      ),
+                      ElevatedButton(
+                        onPressed: () {
+                          setState(() {
+                            _selectedCategory = tempCategory;
+                            _selectedStockStatus = tempStockStatus;
+                          });
+                          Navigator.pop(context);
+                        },
+                        child: const Text('Aplicar'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   void _showEditProductModal(Product product) async {
