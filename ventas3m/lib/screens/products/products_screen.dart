@@ -414,7 +414,25 @@ class _ProductCardState extends State<ProductCard> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Dismissible(
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: isDark
+                  ? Colors.black.withValues(alpha: 0.3)
+                  : Colors.black.withValues(alpha: 0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Dismissible(
+      
       key: Key(widget.product.id),
       direction: DismissDirection.horizontal,
       background: Container(
@@ -470,20 +488,7 @@ class _ProductCardState extends State<ProductCard> {
         }
       },
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: isDark
-                  ? Colors.black.withValues(alpha: 0.3)
-                  : Colors.black.withValues(alpha: 0.1),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         child: Column(
           children: [
             Material(
@@ -655,6 +660,8 @@ class _ProductCardState extends State<ProductCard> {
           ],
         ),
       ),
+    )
+    )      ),
     );
   }
 

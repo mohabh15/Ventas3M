@@ -11,6 +11,7 @@ import '../../models/sale_status.dart';
 import '../../core/widgets/gradient_app_bar.dart';
 import '../../services/auth_service.dart';
 import 'add_sale_modal.dart';
+import 'edit_sale_modal.dart';
 import 'sale_details_modal.dart';
 
 class SalesScreen extends StatefulWidget {
@@ -21,6 +22,8 @@ class SalesScreen extends StatefulWidget {
 }
 
 class _SalesScreenState extends State<SalesScreen> {
+  final Set<String> _deletingSaleIds = {}; // Track sales being deleted
+
   @override
   void initState() {
     super.initState();
@@ -40,6 +43,10 @@ class _SalesScreenState extends State<SalesScreen> {
   }
 
   void _onProjectChanged() {
+    // Limpiar el set de ventas siendo eliminadas al cambiar de proyecto
+    setState(() {
+      _deletingSaleIds.clear();
+    });
     // No cargar datos automáticamente en cambios de proyecto
     // Los datos se cargarán cuando el usuario interactúe con la pantalla
   }
@@ -100,7 +107,8 @@ class _SalesScreenState extends State<SalesScreen> {
                         _ensureSalesDataLoaded();
                       }
                     });
-                    final sales = salesProvider.sales;
+                    final allSales = salesProvider.sales;
+                    final sales = allSales.where((sale) => !_deletingSaleIds.contains(sale.id)).toList();
 
                     // Función auxiliar para obtener el nombre del producto
                     String getProductName(String productId) {
@@ -120,7 +128,7 @@ class _SalesScreenState extends State<SalesScreen> {
                       return product.name;
                     }
 
-                    return sales.isEmpty
+                    return sales.isEmpty && allSales.isEmpty
                       ? Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -212,9 +220,6 @@ class _SalesScreenState extends State<SalesScreen> {
       formattedDate = DateFormat('dd MMM, h:mm a').format(sale.saleDate);
     }
 
-    // Generar número de venta
-    final saleNumber = '#VNT-${sale.id.substring(0, 6).toUpperCase()}';
-
     // Obtener color del badge según el estado
     Color statusColor;
     switch (sale.status) {
@@ -232,148 +237,309 @@ class _SalesScreenState extends State<SalesScreen> {
         break;
     }
 
-    return GestureDetector(
-      onTap: () => _showSaleDetailsModal(sale),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        decoration: BoxDecoration(
-          color: Theme.of(context).brightness == Brightness.dark
-              ? const Color(0xFF1E1E1E)
-              : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? Colors.black.withValues(alpha: 0.5)
-                  : Colors.black.withValues(alpha: 0.1),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Dismissible(
+          key: Key(sale.id),
+          direction: DismissDirection.horizontal,
+          background: Container(
+            alignment: Alignment.centerLeft,
+            padding: const EdgeInsets.only(left: 20),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF44336),
+              borderRadius: BorderRadius.circular(12),
             ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Primera fila: Número de venta
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: const Icon(
+              Icons.delete,
+              color: Colors.white,
+              size: 30,
+            ),
+          ),
+          secondaryBackground: Container(
+            alignment: Alignment.centerRight,
+            padding: const EdgeInsets.only(right: 20),
+            decoration: BoxDecoration(
+              color: Colors.blue,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.edit,
+              color: Colors.white,
+              size: 30,
+            ),
+          ),
+          confirmDismiss: (direction) async {
+            if (direction == DismissDirection.endToStart) {
+              // Editar
+              _showEditSaleModal(sale);
+              return false;
+            } else if (direction == DismissDirection.startToEnd) {
+              // Eliminar - mostrar diálogo de confirmación
+              return await _showDeleteSaleDialog(sale);
+            }
+            return false;
+          },
+          onDismissed: (direction) {
+            if (direction == DismissDirection.startToEnd) {
+              _deleteSale(sale);
+            }
+          },
+          child: GestureDetector(
+            onTap: () => _showSaleDetailsModal(sale),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFF1E1E1E)
+                    : Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.black.withValues(alpha: 0.5)
+                        : Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          saleNumber,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context).brightness == Brightness.dark
-                                ? Colors.white
-                                : Colors.black87,
-                          ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Transform.translate(
+                              offset: const Offset(0, -4),
+                              child: Text(
+                                productName,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Theme.of(context).brightness == Brightness.dark
+                                      ? Colors.white
+                                      : Colors.black87,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              formattedDate,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.grey[300]
+                                    : Colors.grey[600],
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          formattedDate,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Theme.of(context).brightness == Brightness.dark
-                                ? Colors.grey[300]
-                                : Colors.grey[600],
-                          ),
+                      ),
+                      const SizedBox(width: 16),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 16),
+                        child: Column(
+                          children: [
+                            Text(
+                              '\$${sale.totalAmount.toStringAsFixed(2)}',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.blue[400]!
+                                    : Theme.of(context).primaryColor,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: statusColor.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: statusColor.withValues(alpha: 0.3)),
+                              ),
+                              child: Text(
+                                sale.status.displayName,
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w500,
+                                  color: statusColor,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                  ),
-                  // Monto en la esquina superior derecha
-                  Text(
-                    '\$${sale.totalAmount.toStringAsFixed(2)}',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? Colors.blue[400]!
-                          : Theme.of(context).primaryColor,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              // Información del cliente y estado en la misma fila
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Cliente: ${sale.customerName}',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? Colors.grey[200]
-                            : Colors.grey[700],
                       ),
-                    ),
+                    ],
                   ),
-                  // Badge de estado alineado a la derecha
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: statusColor.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: statusColor.withValues(alpha: 0.3)),
-                    ),
-                    child: Text(
-                      sale.status.displayName,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: statusColor,
+                  const SizedBox(height: 8),
+                  // Información de productos y método de pago más compacta
+                  Row(
+                    children: [
+                      Text(
+                        '${sale.quantity} ${sale.quantity == 1 ? 'producto' : 'productos'}',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.grey[300]
+                              : Colors.grey[600],
+                        ),
                       ),
-                    ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 6),
+                        child: Icon(
+                          Icons.circle,
+                          size: 3,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.grey[300]
+                              : Colors.grey[600],
+                        ),
+                      ),
+                      Text(
+                        sale.paymentMethod.displayName,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.grey[300]
+                              : Colors.grey[600],
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
-              // Información de productos y método de pago más compacta
-              Row(
-                children: [
-                  Text(
-                    '${sale.quantity} ${sale.quantity == 1 ? 'producto' : 'productos'}',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? Colors.grey[300]
-                          : Colors.grey[600],
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 6),
-                    child: Icon(
-                      Icons.circle,
-                      size: 3,
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? Colors.grey[300]
-                          : Colors.grey[600],
-                    ),
-                  ),
-                  Text(
-                    sale.paymentMethod.displayName,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? Colors.grey[300]
-                          : Colors.grey[600],
-                    ),
-                  ),
-                ],
-              ),
-            ],
+            ),
           ),
         ),
       ),
+    )
     );
+  }
+
+  void _showEditSaleModal(Sale sale) async {
+    final result = await showModalBottomSheet<Map<String, dynamic>>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.grey[900]
+                : Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: EditSaleModal(sale: sale),
+        );
+      },
+    );
+
+    if (result != null && mounted) {
+      if (result['success'] == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message'] ?? 'Venta actualizada exitosamente'),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<bool> _showDeleteSaleDialog(Sale sale) async {
+    final productsProvider = Provider.of<ProductsProvider>(context, listen: false);
+    final productName = productsProvider.products.firstWhere(
+      (product) => product.id == sale.productId,
+      orElse: () => Product(
+        id: sale.productId,
+        name: 'Producto no encontrado',
+        description: '',
+        basePrice: 0,
+        category: '',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        projectId: '',
+      ),
+    ).name;
+
+    return await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Eliminar Venta'),
+          content: Text('¿Estás seguro de que quieres eliminar la venta de "$productName"? Esta acción no se puede deshacer.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.red,
+              ),
+              child: const Text('Eliminar'),
+            ),
+          ],
+        );
+      },
+    ) ?? false;
+  }
+
+  void _deleteSale(Sale sale) {
+    // Immediately hide the dismissed item
+    setState(() {
+      _deletingSaleIds.add(sale.id);
+    });
+
+    final salesProvider = Provider.of<SalesProvider>(context, listen: false);
+
+    try {
+      salesProvider.deleteSale(sale.id);
+
+      final productsProvider = Provider.of<ProductsProvider>(context, listen: false);
+      final productName = productsProvider.products.firstWhere(
+        (product) => product.id == sale.productId,
+        orElse: () => Product(
+          id: sale.productId,
+          name: 'Producto no encontrado',
+          description: '',
+          basePrice: 0,
+          category: '',
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+          projectId: '',
+        ),
+      ).name;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Venta de $productName eliminada exitosamente'),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
+      // If deletion failed, show the item again
+      setState(() {
+        _deletingSaleIds.remove(sale.id);
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al eliminar venta: ${salesProvider.error ?? e.toString()}'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
   }
 
   void _showAddSaleModal() async {

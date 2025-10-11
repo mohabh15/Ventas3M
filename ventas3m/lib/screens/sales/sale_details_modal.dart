@@ -59,7 +59,7 @@ class SaleDetailsModal extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        'Detalles de Venta',
+                        product?.name ?? 'Detalles de Venta',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,

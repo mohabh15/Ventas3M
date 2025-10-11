@@ -112,6 +112,27 @@ class ProductStockService {
     }
   }
 
+  // Aumentar cantidad de un stock específico
+  Future<bool> increaseStockQuantity(String stockId, int quantityToIncrease) async {
+    try {
+      final stock = await getStock(stockId);
+      if (stock == null) {
+        throw Exception('Stock no encontrado');
+      }
+
+      final newQuantity = stock.quantity + quantityToIncrease;
+      final updatedStock = stock.copyWith(
+        quantity: newQuantity,
+        updatedAt: DateTime.now(),
+      );
+
+      await updateStock(updatedStock);
+      return true;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   // Obtener stock por responsable
   Future<List<ProductStock>> getStockByResponsible(String projectId, String responsibleId) async {
     try {

@@ -149,7 +149,7 @@ class _EditStockModalState extends State<EditStockModal> {
 
                 // Responsable
                 DropdownButtonFormField<String>(
-                  value: _responsibleController.text.isEmpty ? null : _responsibleController.text,
+                  initialValue: _responsibleController.text.isEmpty ? null : _responsibleController.text,
                   style: TextStyle(color: theme.colorScheme.onSurface),
                   decoration: InputDecoration(
                     labelText: 'Responsable',
@@ -189,7 +189,7 @@ class _EditStockModalState extends State<EditStockModal> {
 
                 // Proveedor
                 DropdownButtonFormField<String>(
-                  value: _providerController.text.isEmpty ? null : _providerController.text,
+                  initialValue: _providerController.text.isEmpty ? null : _providerController.text,
                   style: TextStyle(color: theme.colorScheme.onSurface),
                   decoration: InputDecoration(
                     labelText: 'Proveedor',
