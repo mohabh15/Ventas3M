@@ -8,6 +8,9 @@ import '../../router/app_router.dart';
 import 'add_product_modal.dart';
 import 'add_stock_modal.dart';
 import 'edit_product_modal.dart';
+import 'stock_details_modal.dart';
+import 'edit_stock_modal.dart';
+import 'stock_card.dart';
 
 class ProductsScreen extends StatefulWidget {
   const ProductsScreen({super.key});
@@ -695,88 +698,11 @@ class _ProductCardState extends State<ProductCard> {
     }
 
     return stocks.map((stock) {
-      return Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Theme.of(context).brightness == Brightness.dark
-              ? const Color(0xFF333333)
-              : Colors.white,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? Colors.grey[600]!
-                : Colors.grey[300]!,
-          ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: const Color(0xFF42A5F5).withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: const Icon(
-                Icons.inventory,
-                color: Color(0xFF1976D2),
-                size: 16,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Cantidad: ${stock.quantity} • \$${stock.price.toStringAsFixed(2)}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? Colors.white
-                          : const Color(0xFF212121),
-                    ),
-                  ),
-                  Text(
-                    'Responsable: ${stock.responsibleId}',
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? Colors.grey[400]
-                          : Colors.grey[600],
-                    ),
-                  ),
-                  Text(
-                    'Proveedor: ${stock.providerId}',
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? Colors.grey[400]
-                          : Colors.grey[600],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: _getStockStatusColor(_getStockStatus(stock.quantity), Theme.of(context).brightness == Brightness.dark),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Text(
-                _getStockStatusText(_getStockStatus(stock.quantity)),
-                style: const TextStyle(
-                  fontSize: 8,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ],
-        ),
+      return StockCard(
+        stock: stock,
+        onTap: () => _showStockDetailsModal(stock),
+        onEdit: () => _showEditStockModal(stock),
+        onDelete: () => _deleteStock(stock),
       );
     }).toList();
   }
@@ -914,6 +840,98 @@ class _ProductCardState extends State<ProductCard> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error al eliminar el producto: ${productsProvider.error ?? e.toString()}'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
+  // Método para mostrar detalles del stock
+  void _showStockDetailsModal(ProductStock stock) async {
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return Container(
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: StockDetailsModal(stock: stock),
+        );
+      },
+    );
+  }
+
+  // Método para mostrar modal de edición del stock
+  void _showEditStockModal(ProductStock stock) async {
+    final result = await showModalBottomSheet<ProductStock>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return Container(
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: EditStockModal(stock: stock),
+        );
+      },
+    );
+
+    if (result != null && mounted) {
+      // Actualizar el stock
+      final stockProvider = Provider.of<ProductStockProvider>(context, listen: false);
+
+      try {
+        await stockProvider.updateStock(result);
+
+        // Mostrar mensaje de éxito
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Stock actualizado exitosamente'),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      } catch (e) {
+        // Mostrar mensaje de error
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al actualizar el stock: ${stockProvider.error ?? e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
+  }
+
+  // Método para eliminar el stock
+  void _deleteStock(ProductStock stock) async {
+    final stockProvider = Provider.of<ProductStockProvider>(context, listen: false);
+
+    try {
+      await stockProvider.removeStock(stock.id);
+
+      // Mostrar mensaje de éxito
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Stock eliminado exitosamente'),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
+      // Mostrar mensaje de error
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al eliminar el stock: ${stockProvider.error ?? e.toString()}'),
           backgroundColor: Colors.red,
           duration: const Duration(seconds: 3),
         ),

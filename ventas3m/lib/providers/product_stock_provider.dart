@@ -204,50 +204,8 @@ class ProductStockProvider extends ChangeNotifier {
       await _stockService.createStock(stockWithProject);
       _error = null;
 
-      // Combinar el nuevo stock con los datos existentes para mantener consistencia
-      try {
-        final currentStocks = <ProductStock>[];
-
-        // Obtener todos los stocks actuales del mapa
-        for (var stocks in _productStocks.values) {
-          currentStocks.addAll(stocks);
-        }
-
-        // Añadir el nuevo stock
-        currentStocks.add(stockWithProject);
-
-        // Filtrar solo stocks válidos del proyecto actual
-        final validStocks = currentStocks.where((stock) =>
-          stock.projectId == projectId &&
-          stock.productId.isNotEmpty &&
-          stock.id.isNotEmpty
-        ).toList();
-
-        _processStocksData(validStocks);
-      } catch (e) {
-        // Si falla, intentar recargar completamente desde Firestore
-        try {
-          final updatedStocks = await _stockService.getStockByProject(projectId);
-
-          // Filtrar solo stocks válidos del proyecto actual
-          final validStocks = updatedStocks.where((stock) =>
-            stock.projectId == projectId &&
-            stock.productId.isNotEmpty &&
-            stock.id.isNotEmpty
-          ).toList();
-
-          _processStocksData(validStocks);
-        } catch (e2) {
-          // Si falla la recarga directa, intentar recargar el stream
-          if (_settingsProvider?.activeProjectId != null) {
-            _setupStocksStream(_settingsProvider!.activeProjectId!);
-          }
-        }
-      }
-
-      // Notificar a los listeners después de añadir stock exitosamente
-      // Esto asegura que la UI se actualice inmediatamente
-      notifyListeners();
+      // El stream se encargará de actualizar automáticamente la UI
+      // No es necesario actualizar manualmente los datos locales
     } catch (e) {
       _error = 'Error al añadir stock: $e';
       notifyListeners();

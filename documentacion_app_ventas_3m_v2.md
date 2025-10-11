@@ -1479,6 +1479,7 @@ Pendientes
 
 - añadir gestion de proyecto: proveedores... -> añadir la funcionalidad de guardar los proveedores
 - añadir boton + en linea con miembros del equipo (balances) para añadir cuenta balances
+- añadir tabla precios compra venta , con analisis de mercado y actualizacion periodica
 
 
 
