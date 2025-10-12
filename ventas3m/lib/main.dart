@@ -16,7 +16,6 @@ import 'providers/team_balance_provider.dart';
 import 'providers/navigation_provider.dart';
 import 'providers/event_provider.dart';
 import 'core/theme/responsive_theme.dart';
-import 'widgets/auth_wrapper.dart';
 import 'router/app_router.dart';
 
 Future<void> main() async {

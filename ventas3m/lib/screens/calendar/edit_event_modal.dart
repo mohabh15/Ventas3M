@@ -222,7 +222,7 @@ class _EditEventModalState extends State<EditEventModal> {
                       final teamProvider = Provider.of<TeamBalanceProvider>(context);
                       final members = teamProvider.teamBalances;
                       return DropdownButtonFormField<String>(
-                        value: _selectedResponsible,
+                        initialValue: _selectedResponsible,
                         decoration: InputDecoration(
                           labelText: 'Responsable (opcional)',
                           hintText: 'Seleccionar responsable',

@@ -33,6 +33,8 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   late SettingsProvider _settingsProvider;
   bool _listenerAdded = false;
+  bool _hasAttemptedEventsLoad = false;
+  bool _isEventsLoaded = false;
 
   @override
   void didChangeDependencies() {
@@ -217,18 +219,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-              Builder(
-                builder: (context) {
-                  final eventProvider = Provider.of<EventProvider>(context);
-                  // Trigger lazy loading when screen is accessed
+              Consumer<EventProvider>(
+                builder: (context, eventProvider, child) {
+                  // Trigger lazy loading when screen is accessed (solo una vez)
                   WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (mounted && eventProvider.events.isEmpty && !eventProvider.isLoading) {
+                    if (mounted && !_hasAttemptedEventsLoad && eventProvider.events.isEmpty && !eventProvider.isLoading) {
+                      _hasAttemptedEventsLoad = true;
                       final authProvider = Provider.of<AuthProvider>(context, listen: false);
                       final userId = authProvider.currentUser?.id ?? 'guest';
-                      eventProvider.loadEvents(userId);
+                      eventProvider.loadEvents(userId).then((_) {
+                        if (mounted) {
+                          setState(() {
+                            _isEventsLoaded = true;
+                          });
+                        }
+                      });
                     }
                   });
-                  if (eventProvider.isLoading) {
+                  if (eventProvider.isLoading && !_isEventsLoaded) {
                     return const LoadingWidget();
                   }
 
@@ -258,7 +266,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                   final recentEvents = eventProvider.recentEvents;
 
-                  if (recentEvents.isEmpty) {
+                  if (recentEvents.isEmpty && _isEventsLoaded) {
                     return Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(32),
@@ -282,22 +290,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     );
                   }
 
-                  return Column(
-                    children: recentEvents.map((event) => _buildRecentEventCard(event, () {
-                      // Verificar que el contexto esté disponible antes de navegar
-                      if (!mounted) return;
+                  // Mostrar eventos si ya están cargados o si hay eventos disponibles
+                  if (recentEvents.isNotEmpty || _isEventsLoaded) {
+                    return Column(
+                      children: recentEvents.map((event) => _buildRecentEventCard(event, () {
+                        // Verificar que el contexto esté disponible antes de navegar
+                        if (!mounted) return;
 
-                      // Usar context.go() de forma segura verificando que el contexto esté activo
-                      try {
-                        context.go('/calendar', extra: event.date);
-                      } catch (e) {
-                        // Si hay error con el contexto, intentar con Navigator como fallback
-                        if (mounted) {
-                          Navigator.of(context, rootNavigator: true).pushNamed('/calendar');
+                        // Usar context.go() de forma segura verificando que el contexto esté activo
+                        try {
+                          context.go('/calendar', extra: event.date);
+                        } catch (e) {
+                          // Si hay error con el contexto, intentar con Navigator como fallback
+                          if (mounted) {
+                            Navigator.of(context, rootNavigator: true).pushNamed('/calendar');
+                          }
                         }
-                      }
-                    })).toList(),
-                  );
+                      })).toList(),
+                    );
+                  }
+
+                  // Estado inicial: no mostrar nada mientras carga por primera vez
+                  return const SizedBox.shrink();
+
                 },
               ),
               const SizedBox(height: 24),
