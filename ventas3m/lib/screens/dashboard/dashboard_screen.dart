@@ -10,9 +10,14 @@ import '../../models/product.dart';
 import '../../providers/sales_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/products_provider.dart';
+import '../../providers/product_stock_provider.dart';
 import '../../providers/navigation_provider.dart';
 import '../../services/auth_service.dart';
+import '../../services/firebase_service.dart';
 import '../settings/settings_screen.dart';
+import '../sales/add_sale_modal.dart';
+import '../products/add_stock_modal.dart';
+import '../reports/reports_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -198,26 +203,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       backgroundColor: Theme.of(context).brightness == Brightness.dark
                           ? AppDarkColors.primary
                           : AppColors.primary,
+                      onTap: _showAddSaleModal,
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: _buildActionButton(
-                      title: 'Productos',
-                      icon: Icons.inventory_2_outlined,
+                      title: 'Añadir\nStock',
+                      icon: Icons.add_box,
                       backgroundColor: Theme.of(context).brightness == Brightness.dark
                           ? AppDarkColors.products
                           : AppColors.products,
+                      onTap: _showAddStockModal,
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: _buildActionButton(
-                      title: 'Reportes',
+                      title: 'Ver\nAnálisis',
                       icon: Icons.analytics,
                       backgroundColor: Theme.of(context).brightness == Brightness.dark
                           ? AppDarkColors.secondary
                           : AppColors.secondary,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const ReportsScreen()),
+                        );
+                      },
                     ),
                   ),
                 ],
@@ -436,11 +449,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
     required String title,
     required IconData icon,
     required Color backgroundColor,
+    VoidCallback? onTap,
   }) {
     return AppCard(
       backgroundColor: backgroundColor,
       padding: const EdgeInsets.all(20),
-      onTap: () {},
+      onTap: onTap ?? () {},
       child: Column(
         children: [
           Icon(
@@ -526,6 +540,285 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ],
       ),
     );
+  }
+
+  void _showAddSaleModal() async {
+    final result = await showModalBottomSheet<Map<String, dynamic>>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: const AddSaleModal(),
+        );
+      },
+    );
+
+    // Verificar que el widget esté montado antes de continuar
+    if (!mounted) return;
+
+    if (result != null) {
+      // Crear objeto Sale desde el mapa
+      final newSale = result['sale'] as Sale?;
+      if (newSale != null) {
+        // Usar addPostFrameCallback para evitar el error de setState durante el build
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            // La venta ya fue creada en el modal, solo mostrar confirmación
+            final productsProvider = Provider.of<ProductsProvider>(context, listen: false);
+            final productName = productsProvider.products.firstWhere(
+              (product) => product.id == newSale.productId,
+              orElse: () => Product(
+                id: newSale.productId,
+                name: newSale.productId,
+                description: '',
+                basePrice: 0,
+                category: '',
+                createdAt: DateTime.now(),
+                updatedAt: DateTime.now(),
+                projectId: '',
+              ),
+            ).name;
+
+            // Verificación adicional justo antes de usar el contexto
+            if (!mounted) return;
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Venta de $productName guardada exitosamente'),
+                backgroundColor: Colors.green,
+                duration: const Duration(seconds: 2),
+              ),
+            );
+          }
+        });
+      }
+    }
+  }
+
+  void _showAddStockModal() async {
+    // First, show product selection dialog
+    final productsProvider = Provider.of<ProductsProvider>(context, listen: false);
+    final products = productsProvider.products;
+
+    if (products.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No hay productos disponibles. Crea un producto primero.'),
+          backgroundColor: Colors.orange,
+          duration: Duration(seconds: 3),
+        ),
+      );
+      return;
+    }
+
+    final selectedProduct = await showModalBottomSheet<Product>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        final theme = Theme.of(context);
+        final isDark = theme.brightness == Brightness.dark;
+
+        return Container(
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+              left: 16,
+              right: 16,
+              top: 16,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Seleccionar Producto',
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        color: theme.colorScheme.onSurface,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.close, color: theme.colorScheme.onSurface),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.6,
+                  child: ListView.builder(
+                    itemCount: products.length,
+                    itemBuilder: (context, index) {
+                      final product = products[index];
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: isDark ? 0.3 : 0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: theme.colorScheme.outline.withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          title: Text(
+                            product.name,
+                            style: TextStyle(
+                              color: theme.colorScheme.onSurface,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          subtitle: Text(
+                            'Precio base: \$${product.basePrice.toStringAsFixed(2)}',
+                            style: TextStyle(
+                              color: theme.colorScheme.onSurfaceVariant,
+                              fontSize: 12,
+                            ),
+                          ),
+                          trailing: Icon(
+                            Icons.arrow_forward_ios,
+                            size: 16,
+                            color: theme.colorScheme.primary,
+                          ),
+                          onTap: () => Navigator.of(context).pop(product),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      style: TextButton.styleFrom(
+                        foregroundColor: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                      ),
+                      child: const Text('Cancelar'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (selectedProduct == null || !mounted) return;
+
+    // Now show the AddStockModal for the selected product
+    // Get project members and providers
+    final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
+    final activeProjectId = settingsProvider.activeProjectId;
+    List<String> projectMembers = [];
+    List<String> projectProviders = [];
+    if (activeProjectId != null) {
+      try {
+        final firebaseService = FirebaseService();
+        final project = await firebaseService.getProjectById(activeProjectId);
+        if (project != null) {
+          projectMembers = project.members;
+          projectProviders = project.providers.map((provider) => provider.name).toList();
+        }
+      } catch (e) {
+        // En caso de error, usar lista vacía
+        projectMembers = [];
+        projectProviders = [];
+      }
+    }
+
+    final result = await showModalBottomSheet<Map<String, dynamic>>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: AddStockModal(
+            productId: selectedProduct.id,
+            productName: selectedProduct.name,
+            projectMembers: projectMembers,
+            projectProviders: projectProviders,
+          ),
+        );
+      },
+    );
+
+    if (result != null && mounted) {
+      // Create ProductStock object from the form data
+      final newStock = ProductStock(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        productId: result['productId'] as String,
+        quantity: result['quantity'] as int,
+        responsibleId: result['responsibleId'] as String,
+        providerId: result['providerId'] as String,
+        price: result['price'] as double,
+        purchaseDate: result['purchaseDate'] as DateTime,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        projectId: activeProjectId ?? '',
+      );
+
+      // Use addPostFrameCallback to avoid setState during build
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          final stockProvider = Provider.of<ProductStockProvider>(context, listen: false);
+
+          try {
+            // Add the stock
+            stockProvider.addStock(newStock);
+
+            // Show success message
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted && stockProvider.error == null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Stock añadido exitosamente'),
+                    backgroundColor: Colors.green,
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              }
+            });
+          } catch (e) {
+            // Show error message
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted && stockProvider.error != null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(stockProvider.error!),
+                    backgroundColor: Colors.red,
+                    duration: const Duration(seconds: 3),
+                  ),
+                );
+              }
+            });
+          }
+        }
+      });
+    }
   }
 
   Color _getAvatarColor(String customer) {

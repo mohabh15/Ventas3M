@@ -3,10 +3,14 @@ import '../../models/product.dart';
 
 class EditStockModal extends StatefulWidget {
   final ProductStock stock;
+  final List<String> projectMembers;
+  final List<String> projectProviders;
 
   const EditStockModal({
     super.key,
     required this.stock,
+    required this.projectMembers,
+    required this.projectProviders,
   });
 
   @override
@@ -21,24 +25,7 @@ class _EditStockModalState extends State<EditStockModal> {
   late final TextEditingController _priceController;
   late DateTime _selectedDate;
 
-  // Datos de ejemplo para responsables y proveedores
-  final List<String> _responsibles = [
-    'Ana García',
-    'Carlos López',
-    'María Rodríguez',
-    'José Martín',
-    'Laura Sánchez',
-    'David González',
-  ];
 
-  final List<String> _providers = [
-    'TechSolutions S.A.',
-    'ElectroImport',
-    'GadgetsPro',
-    'MobileTech',
-    'AudioMax',
-    'GameZone',
-  ];
 
   @override
   void initState() {
@@ -167,7 +154,7 @@ class _EditStockModalState extends State<EditStockModal> {
                       borderSide: BorderSide(color: theme.colorScheme.primary, width: 2),
                     ),
                   ),
-                  items: _responsibles.map((String responsible) {
+                  items: widget.projectMembers.map((String responsible) {
                     return DropdownMenuItem<String>(
                       value: responsible,
                       child: Text(responsible),
@@ -207,7 +194,7 @@ class _EditStockModalState extends State<EditStockModal> {
                       borderSide: BorderSide(color: theme.colorScheme.primary, width: 2),
                     ),
                   ),
-                  items: _providers.map((String provider) {
+                  items: widget.projectProviders.map((String provider) {
                     return DropdownMenuItem<String>(
                       value: provider,
                       child: Text(provider),

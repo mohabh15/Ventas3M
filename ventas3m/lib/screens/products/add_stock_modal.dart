@@ -3,11 +3,15 @@ import 'package:flutter/material.dart';
 class AddStockModal extends StatefulWidget {
   final String productId;
   final String productName;
+  final List<String> projectMembers;
+  final List<String> projectProviders;
 
   const AddStockModal({
     super.key,
     required this.productId,
     required this.productName,
+    required this.projectMembers,
+    required this.projectProviders,
   });
 
   @override
@@ -22,24 +26,6 @@ class _AddStockModalState extends State<AddStockModal> {
   final _priceController = TextEditingController();
   DateTime _selectedDate = DateTime.now();
 
-  // Datos de ejemplo para responsables y proveedores
-  final List<String> _responsibles = [
-    'Ana García',
-    'Carlos López',
-    'María Rodríguez',
-    'José Martín',
-    'Laura Sánchez',
-    'David González',
-  ];
-
-  final List<String> _providers = [
-    'TechSolutions S.A.',
-    'ElectroImport',
-    'GadgetsPro',
-    'MobileTech',
-    'AudioMax',
-    'GameZone',
-  ];
 
   @override
   void dispose() {
@@ -158,7 +144,7 @@ class _AddStockModalState extends State<AddStockModal> {
                       borderSide: BorderSide(color: theme.colorScheme.primary, width: 2),
                     ),
                   ),
-                  items: _responsibles.map((String responsible) {
+                  items: widget.projectMembers.map((String responsible) {
                     return DropdownMenuItem<String>(
                       value: responsible,
                       child: Text(responsible),
@@ -198,7 +184,7 @@ class _AddStockModalState extends State<AddStockModal> {
                       borderSide: BorderSide(color: theme.colorScheme.primary, width: 2),
                     ),
                   ),
-                  items: _providers.map((String provider) {
+                  items: widget.projectProviders.map((String provider) {
                     return DropdownMenuItem<String>(
                       value: provider,
                       child: Text(provider),

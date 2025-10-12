@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/products_provider.dart';
 import '../../providers/product_stock_provider.dart';
+import '../../providers/settings_provider.dart';
+import '../../services/firebase_service.dart';
 import '../../models/product.dart';
+import '../../models/provider.dart' as provider_model;
 import '../../core/widgets/gradient_app_bar.dart';
 import '../../router/app_router.dart';
 import 'add_product_modal.dart';
@@ -293,6 +296,26 @@ class _ProductsScreenState extends State<ProductsScreen> {
   }
 
   void _showAddStockModal(String productId, String productName) async {
+    // Obtener miembros y proveedores del proyecto actual
+    final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
+    final activeProjectId = settingsProvider.activeProjectId;
+    List<String> projectMembers = [];
+    List<String> projectProviders = [];
+    if (activeProjectId != null) {
+      try {
+        final firebaseService = FirebaseService();
+        final project = await firebaseService.getProjectById(activeProjectId);
+        if (project != null) {
+          projectMembers = project.members;
+          projectProviders = project.providers.map((provider_model.Provider provider) => provider.name).toList();
+        }
+      } catch (e) {
+        // En caso de error, usar lista vacía
+        projectMembers = [];
+        projectProviders = [];
+      }
+    }
+
     final result = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
       isScrollControlled: true,
@@ -307,6 +330,8 @@ class _ProductsScreenState extends State<ProductsScreen> {
           child: AddStockModal(
             productId: productId,
             productName: productName,
+            projectMembers: projectMembers,
+            projectProviders: projectProviders,
           ),
         );
       },
@@ -1106,6 +1131,26 @@ class _ProductCardState extends State<ProductCard> {
 
   // Método para mostrar modal de edición del stock
   void _showEditStockModal(ProductStock stock) async {
+    // Obtener miembros y proveedores del proyecto actual
+    final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
+    final activeProjectId = settingsProvider.activeProjectId;
+    List<String> projectMembers = [];
+    List<String> projectProviders = [];
+    if (activeProjectId != null) {
+      try {
+        final firebaseService = FirebaseService();
+        final project = await firebaseService.getProjectById(activeProjectId);
+        if (project != null) {
+          projectMembers = project.members;
+          projectProviders = project.providers.map((provider_model.Provider provider) => provider.name).toList();
+        }
+      } catch (e) {
+        // En caso de error, usar lista vacía
+        projectMembers = [];
+        projectProviders = [];
+      }
+    }
+
     final result = await showModalBottomSheet<ProductStock>(
       context: context,
       isScrollControlled: true,
@@ -1117,7 +1162,11 @@ class _ProductCardState extends State<ProductCard> {
             color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           ),
-          child: EditStockModal(stock: stock),
+          child: EditStockModal(
+            stock: stock,
+            projectMembers: projectMembers,
+            projectProviders: projectProviders,
+          ),
         );
       },
     );

@@ -10,12 +10,24 @@ class FirebaseService {
 
   Future<List<Project>> getProjects() async {
     try {
-      final userEmail = AuthService().currentUser?.email;     
+      final userEmail = AuthService().currentUser?.email;
       if (userEmail == null) return [];
       final snapshot = await _firestore.collection('projects').get();
       final projects = snapshot.docs.map((doc) => Project.fromJson(doc.data()..['id'] = doc.id)).toList();
       final filteredProjects = projects.where((project) => project.members.contains(userEmail)).toList();
       return filteredProjects;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<Project?> getProjectById(String projectId) async {
+    try {
+      final doc = await _firestore.collection('projects').doc(projectId).get();
+      if (doc.exists) {
+        return Project.fromJson(doc.data()!..['id'] = doc.id);
+      }
+      return null;
     } catch (e) {
       rethrow;
     }

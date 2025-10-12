@@ -172,7 +172,7 @@ class _AddProductModalState extends State<AddProductModal> {
                     const SizedBox(width: 16),
                     Expanded(
                       child: DropdownButtonFormField<String>(
-                        value: _selectedCategory,
+                        initialValue: _selectedCategory,
                         isExpanded: true,
                         items: predefinedCategories.map((category) => DropdownMenuItem(
                           value: category,
