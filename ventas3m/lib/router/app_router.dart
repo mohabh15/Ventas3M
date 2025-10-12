@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../screens/login/login_screen.dart';
 import '../screens/register/register_screen.dart';
 import '../screens/forgot_password/forgot_password_screen.dart';
@@ -11,6 +12,8 @@ import '../screens/expenses/expenses_screen.dart';
 import '../screens/expenses/add_edit_expense_modal.dart';
 import '../screens/banking/team_balance_screen.dart';
 import '../screens/debt/debt_management_screen.dart';
+import '../screens/calendar/calendar_screen.dart';
+import '../widgets/auth_wrapper.dart';
 import '../models/expense.dart';
 
 class AppRouter {
@@ -27,22 +30,73 @@ class AppRouter {
   static const String editExpense = '/edit-expense';
   static const String teamBalance = '/team-balance';
   static const String debtManagement = '/debt-management';
+  static const String calendar = '/calendar';
 
-  static Map<String, WidgetBuilder> get routes => {
-    login: (context) => const LoginScreen(),
-    register: (context) => const RegisterScreen(),
-    forgotPassword: (context) => const ForgotPasswordScreen(),
-    dashboard: (context) => const DashboardScreen(),
-    profile: (context) => ProfileScreen(),
-    settings: (context) => const SettingsScreen(),
-    sales: (context) => const SalesScreen(),
-    products: (context) => const ProductsScreen(),
-    expenses: (context) => const ExpensesScreen(),
-    addExpense: (context) => const AddEditExpenseModal(),
-    editExpense: (context) => AddEditExpenseModal(
-      expense: ModalRoute.of(context)?.settings.arguments as Expense?,
-    ),
-    teamBalance: (context) => const TeamBalanceScreen(),
-    debtManagement: (context) => const DebtManagementScreen(),
-  };
+  static GoRouter get router => GoRouter(
+        initialLocation: '/',
+        routes: [
+          GoRoute(
+            path: '/',
+            builder: (context, state) => const AuthWrapper(),
+          ),
+          GoRoute(
+            path: login,
+            builder: (context, state) => const LoginScreen(),
+          ),
+          GoRoute(
+            path: register,
+            builder: (context, state) => const RegisterScreen(),
+          ),
+          GoRoute(
+            path: forgotPassword,
+            builder: (context, state) => const ForgotPasswordScreen(),
+          ),
+          GoRoute(
+            path: dashboard,
+            builder: (context, state) => const DashboardScreen(),
+          ),
+          GoRoute(
+            path: profile,
+            builder: (context, state) => ProfileScreen(),
+          ),
+          GoRoute(
+            path: settings,
+            builder: (context, state) => const SettingsScreen(),
+          ),
+          GoRoute(
+            path: sales,
+            builder: (context, state) => const SalesScreen(),
+          ),
+          GoRoute(
+            path: products,
+            builder: (context, state) => const ProductsScreen(),
+          ),
+          GoRoute(
+            path: expenses,
+            builder: (context, state) => const ExpensesScreen(),
+          ),
+          GoRoute(
+            path: addExpense,
+            builder: (context, state) => const AddEditExpenseModal(),
+          ),
+          GoRoute(
+            path: editExpense,
+            builder: (context, state) => AddEditExpenseModal(
+              expense: state.extra as Expense?,
+            ),
+          ),
+          GoRoute(
+            path: teamBalance,
+            builder: (context, state) => const TeamBalanceScreen(),
+          ),
+          GoRoute(
+            path: debtManagement,
+            builder: (context, state) => const DebtManagementScreen(),
+          ),
+          GoRoute(
+            path: calendar,
+            builder: (context, state) => CalendarScreen(initialDate: state.extra as DateTime?),
+          ),
+        ],
+      );
 }

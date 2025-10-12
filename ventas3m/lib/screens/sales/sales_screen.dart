@@ -30,21 +30,29 @@ class _SalesScreenState extends State<SalesScreen> {
   PaymentMethod? _selectedPaymentMethod;
   DateTimeRange? _selectedDateRange;
 
+  late SettingsProvider _settingsProvider;
+  bool _listenerAdded = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_listenerAdded) {
+      _settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
+      _settingsProvider.addListener(_onProjectChanged);
+      _listenerAdded = true;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
-
-    // Escuchar cambios en el proyecto activo pero no cargar datos automáticamente
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
-      settingsProvider.addListener(_onProjectChanged);
-    });
   }
 
   @override
   void dispose() {
-    final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
-    settingsProvider.removeListener(_onProjectChanged);
+    if (_listenerAdded) {
+      _settingsProvider.removeListener(_onProjectChanged);
+    }
     super.dispose();
   }
 

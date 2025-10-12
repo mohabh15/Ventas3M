@@ -14,6 +14,7 @@ import 'providers/expense_provider.dart';
 import 'providers/debt_provider.dart';
 import 'providers/team_balance_provider.dart';
 import 'providers/navigation_provider.dart';
+import 'providers/event_provider.dart';
 import 'core/theme/responsive_theme.dart';
 import 'widgets/auth_wrapper.dart';
 import 'router/app_router.dart';
@@ -43,6 +44,8 @@ Future<void> main() async {
         }),
         // SalesProvider para gestionar las ventas
         ChangeNotifierProvider(create: (_) => SalesProvider()),
+        // EventProvider para gestionar los eventos
+        ChangeNotifierProvider(create: (_) => EventProvider()),
         ChangeNotifierProvider(create: (context) {
           final productProvider = ProductsProvider();
           // Conectar con SettingsProvider para sincronización
@@ -82,7 +85,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
 
-    return MaterialApp(
+    return MaterialApp.router(
       title: 'Ventas 3M',
       debugShowCheckedModeBanner: false,
       theme: ResponsiveAppTheme.getResponsiveTheme(
@@ -90,8 +93,7 @@ class MyApp extends StatelessWidget {
         isDark: themeProvider.isDark,
         highContrast: themeProvider.highContrast,
       ),
-      home: const AuthWrapper(),
-      routes: AppRouter.routes,
+      routerConfig: AppRouter.router,
     );
   }
 }

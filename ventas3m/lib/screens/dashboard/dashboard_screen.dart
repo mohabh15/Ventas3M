@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/colors.dart';
@@ -7,11 +8,14 @@ import '../../core/widgets/gradient_app_bar.dart';
 import '../../core/widgets/loading_widget.dart';
 import '../../models/sale.dart';
 import '../../models/product.dart';
+import '../../models/event.dart';
 import '../../providers/sales_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/products_provider.dart';
 import '../../providers/product_stock_provider.dart';
 import '../../providers/navigation_provider.dart';
+import '../../providers/event_provider.dart';
+import '../../providers/auth_provider.dart';
 import '../../services/auth_service.dart';
 import '../../services/firebase_service.dart';
 import '../settings/settings_screen.dart';
@@ -27,22 +31,29 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  late SettingsProvider _settingsProvider;
+  bool _listenerAdded = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_listenerAdded) {
+      _settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
+      _settingsProvider.addListener(_onProjectChanged);
+      _listenerAdded = true;
+    }
+  }
 
   @override
   void initState() {
     super.initState();
-
-    // Escuchar cambios en el proyecto activo pero no cargar datos automáticamente
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
-      settingsProvider.addListener(_onProjectChanged);
-    });
   }
 
   @override
   void dispose() {
-    final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
-    settingsProvider.removeListener(_onProjectChanged);
+    if (_listenerAdded) {
+      _settingsProvider.removeListener(_onProjectChanged);
+    }
     super.dispose();
   }
 
@@ -182,6 +193,112 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ),
                 ],
+              ),
+              const SizedBox(height: 24),
+
+              // Sección de Últimos Eventos
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Últimos Eventos',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.calendar_today),
+                    onPressed: () {
+                      context.go('/calendar');
+                    },
+                    tooltip: 'Ver calendario',
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Builder(
+                builder: (context) {
+                  final eventProvider = Provider.of<EventProvider>(context);
+                  // Trigger lazy loading when screen is accessed
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted && eventProvider.events.isEmpty && !eventProvider.isLoading) {
+                      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                      final userId = authProvider.currentUser?.id ?? 'guest';
+                      eventProvider.loadEvents(userId);
+                    }
+                  });
+                  if (eventProvider.isLoading) {
+                    return const LoadingWidget();
+                  }
+
+                  if (eventProvider.error != null) {
+                    return Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(32),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.error_outline,
+                            size: 64,
+                            color: Theme.of(context).colorScheme.error.withValues(alpha: 0.5),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Error al cargar eventos',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              color: Theme.of(context).colorScheme.error,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  final recentEvents = eventProvider.recentEvents;
+
+                  if (recentEvents.isEmpty) {
+                    return Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(32),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.event_note_outlined,
+                            size: 64,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'No hay eventos recientes',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  return Column(
+                    children: recentEvents.map((event) => _buildRecentEventCard(event, () {
+                      // Verificar que el contexto esté disponible antes de navegar
+                      if (!mounted) return;
+
+                      // Usar context.go() de forma segura verificando que el contexto esté activo
+                      try {
+                        context.go('/calendar', extra: event.date);
+                      } catch (e) {
+                        // Si hay error con el contexto, intentar con Navigator como fallback
+                        if (mounted) {
+                          Navigator.of(context, rootNavigator: true).pushNamed('/calendar');
+                        }
+                      }
+                    })).toList(),
+                  );
+                },
               ),
               const SizedBox(height: 24),
 
@@ -542,12 +659,75 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  Widget _buildRecentEventCard(Event event, VoidCallback onTap) {
+    return AppCard(
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(16),
+      onTap: onTap,
+      child: Row(
+        children: [
+          Icon(
+            Icons.event,
+            color: Theme.of(context).colorScheme.primary,
+            size: 24,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  event.title,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+                Text(
+                  event.description.length > 50
+                      ? '${event.description.substring(0, 50)}...'
+                      : event.description,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                DateFormat('dd/MM/yyyy').format(event.date),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+              Text(
+                DateFormat('HH:mm').format(event.date),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontSize: 10,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showAddSaleModal() async {
     final result = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (BuildContext context) {
+      builder: (BuildContext modalContext) {
         return Container(
           decoration: const BoxDecoration(
             color: Colors.white,
@@ -620,7 +800,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (BuildContext context) {
+      builder: (BuildContext modalContext) {
         final theme = Theme.of(context);
         final isDark = theme.brightness == Brightness.dark;
 
@@ -750,7 +930,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (BuildContext context) {
+      builder: (BuildContext modalContext) {
         return Container(
           decoration: const BoxDecoration(
             color: Colors.white,
@@ -765,6 +945,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
         );
       },
     );
+
+    // Verificar que el contexto esté disponible después del modal
+    if (!mounted) return;
 
     if (result != null && mounted) {
       // Create ProductStock object from the form data
