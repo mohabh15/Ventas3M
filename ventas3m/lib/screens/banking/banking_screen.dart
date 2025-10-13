@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/widgets/gradient_app_bar.dart';
 import '../../router/app_router.dart';
 import '../../providers/expense_provider.dart';
@@ -534,7 +535,7 @@ class _BankingScreenState extends State<BankingScreen> {
                 ),
                 TextButton(
                   onPressed: () {
-                    Navigator.pushNamed(context, AppRouter.teamBalance);
+                    context.push(AppRouter.teamBalance);
                   },
                   child: Text(
                     '>',
@@ -604,7 +605,7 @@ class _BankingScreenState extends State<BankingScreen> {
                 ),
                 TextButton(
                   onPressed: () {
-                    Navigator.pushNamed(context, AppRouter.teamBalance);
+                    context.push(AppRouter.teamBalance);
                   },
                   child: Text(
                     '>',
@@ -656,7 +657,7 @@ class _BankingScreenState extends State<BankingScreen> {
               ),
               TextButton(
                 onPressed: () {
-                  Navigator.pushNamed(context, AppRouter.teamBalance);
+                  context.push(AppRouter.teamBalance);
                 },
                 child: Text(
                   '>',
@@ -805,7 +806,7 @@ class _BankingScreenState extends State<BankingScreen> {
               ),
               TextButton(
                 onPressed: () {
-                  Navigator.pushNamed(context, AppRouter.expenses);
+                  context.push(AppRouter.expenses);
                 },
                 child: Text(
                   '>',
@@ -847,7 +848,7 @@ class _BankingScreenState extends State<BankingScreen> {
               ),
               TextButton(
                 onPressed: () {
-                  Navigator.pushNamed(context, '/debt-management');
+                  context.push('/debt-management');
                 },
                 child: Text(
                   '>',

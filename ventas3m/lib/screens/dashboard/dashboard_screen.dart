@@ -212,7 +212,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   IconButton(
                     icon: const Icon(Icons.calendar_today),
                     onPressed: () {
-                      context.go('/calendar');
+                      context.push('/calendar');
                     },
                     tooltip: 'Ver calendario',
                   ),
@@ -299,7 +299,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                         // Usar context.go() de forma segura verificando que el contexto esté activo
                         try {
-                          context.go('/calendar', extra: event.date);
+                          context.push('/calendar', extra: event.date);
                         } catch (e) {
                           // Si hay error con el contexto, intentar con Navigator como fallback
                           if (mounted) {

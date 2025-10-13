@@ -4,12 +4,14 @@ class GradientAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final List<Widget>? actions;
   final double elevation;
+  final Widget? leading;
 
   const GradientAppBar({
     super.key,
     required this.title,
     this.actions,
     this.elevation = 4,
+    this.leading,
   });
 
   @override
@@ -20,6 +22,7 @@ class GradientAppBar extends StatelessWidget implements PreferredSizeWidget {
       elevation: 0,
       backgroundColor: Colors.transparent,
       actions: actions,
+      leading: leading,
     );
   }
 

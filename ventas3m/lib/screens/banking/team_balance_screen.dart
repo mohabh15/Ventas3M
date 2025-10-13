@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../core/widgets/gradient_app_bar.dart';
 import '../../core/widgets/app_button.dart';
@@ -214,6 +215,16 @@ class _TeamBalanceScreenState extends State<TeamBalanceScreen> {
     return Scaffold(
       appBar: GradientAppBar(
         title: 'Balance del Equipo',
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () {
+            if (GoRouter.of(context).canPop()) {
+              context.pop();
+            } else {
+              context.go('/dashboard');
+            }
+          },
+        ),
       ),
       body: _isLoading
           ? const LoadingWidget()
