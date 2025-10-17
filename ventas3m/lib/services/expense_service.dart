@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import '../models/expense.dart';
 
 class ExpenseService {
@@ -31,6 +32,11 @@ class ExpenseService {
   }
 
   Stream<List<Expense>> getAllExpenses() {
+    // Verificar si hay usuario autenticado antes de crear el stream
+    if (firebase_auth.FirebaseAuth.instance.currentUser == null) {
+      return Stream.value([]);
+    }
+
     return _firestore
         .collection('expenses')
         .orderBy('createdAt', descending: true)
@@ -41,6 +47,11 @@ class ExpenseService {
   }
 
   Stream<List<Expense>> getExpensesByProject(String projectId) {
+    // Verificar si hay usuario autenticado antes de crear el stream
+    if (firebase_auth.FirebaseAuth.instance.currentUser == null) {
+      return Stream.value([]);
+    }
+
     return _firestore
         .collection('expenses')
         .where('projectId', isEqualTo: projectId)
@@ -52,6 +63,11 @@ class ExpenseService {
   }
 
   Stream<List<Expense>> getExpensesByProvider(String providerId) {
+    // Verificar si hay usuario autenticado antes de crear el stream
+    if (firebase_auth.FirebaseAuth.instance.currentUser == null) {
+      return Stream.value([]);
+    }
+
     return _firestore
         .collection('expenses')
         .where('providerId', isEqualTo: providerId)
@@ -63,6 +79,11 @@ class ExpenseService {
   }
 
   Stream<List<Expense>> getExpensesByCategory(String category) {
+    // Verificar si hay usuario autenticado antes de crear el stream
+    if (firebase_auth.FirebaseAuth.instance.currentUser == null) {
+      return Stream.value([]);
+    }
+
     return _firestore
         .collection('expenses')
         .where('category', isEqualTo: category)
@@ -74,6 +95,11 @@ class ExpenseService {
   }
 
   Stream<List<Expense>> getExpensesByDateRange(DateTime start, DateTime end) {
+    // Verificar si hay usuario autenticado antes de crear el stream
+    if (firebase_auth.FirebaseAuth.instance.currentUser == null) {
+      return Stream.value([]);
+    }
+
     return _firestore
         .collection('expenses')
         .where('date', isGreaterThanOrEqualTo: start.toIso8601String())
@@ -156,6 +182,11 @@ class ExpenseService {
   }
 
   Stream<List<Expense>> getRecurringExpenses() {
+    // Verificar si hay usuario autenticado antes de crear el stream
+    if (firebase_auth.FirebaseAuth.instance.currentUser == null) {
+      return Stream.value([]);
+    }
+
     return _firestore
         .collection('expenses')
         .where('isRecurring', isEqualTo: true)
@@ -167,6 +198,11 @@ class ExpenseService {
   }
 
   Stream<List<Expense>> getExpensesByUser(String userId) {
+    // Verificar si hay usuario autenticado antes de crear el stream
+    if (firebase_auth.FirebaseAuth.instance.currentUser == null) {
+      return Stream.value([]);
+    }
+
     return _firestore
         .collection('expenses')
         .where('createdBy', isEqualTo: userId)

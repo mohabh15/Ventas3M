@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import '../models/debt.dart';
 
 class DebtService {
@@ -106,6 +107,11 @@ class DebtService {
 
   // Query Operations
   Stream<List<Debt>> getDebtsByProject(String projectId) {
+    // Verificar si hay usuario autenticado antes de crear el stream
+    if (firebase_auth.FirebaseAuth.instance.currentUser == null) {
+      return Stream.value([]);
+    }
+
     return _debtsCollection
         .where('projectId', isEqualTo: projectId)
         .orderBy('createdAt', descending: true)
@@ -119,6 +125,11 @@ class DebtService {
   }
 
   Stream<List<Debt>> getDebtsByUser(String userEmail) {
+    // Verificar si hay usuario autenticado antes de crear el stream
+    if (firebase_auth.FirebaseAuth.instance.currentUser == null) {
+      return Stream.value([]);
+    }
+
     return _debtsCollection
         .where('debtor', isEqualTo: userEmail)
         .orderBy('createdAt', descending: true)
@@ -132,6 +143,11 @@ class DebtService {
   }
 
   Stream<List<Debt>> getDebtsByDebtor(String debtorEmail) {
+    // Verificar si hay usuario autenticado antes de crear el stream
+    if (firebase_auth.FirebaseAuth.instance.currentUser == null) {
+      return Stream.value([]);
+    }
+
     return _debtsCollection
         .where('debtor', isEqualTo: debtorEmail)
         .orderBy('createdAt', descending: true)
@@ -145,6 +161,11 @@ class DebtService {
   }
 
   Stream<List<Debt>> getDebtsWhereUserIsCreditor(String userEmail) {
+    // Verificar si hay usuario autenticado antes de crear el stream
+    if (firebase_auth.FirebaseAuth.instance.currentUser == null) {
+      return Stream.value([]);
+    }
+
     return _debtsCollection
         .where('debtor', isEqualTo: userEmail)
         .where('debtType', isEqualTo: DebtType.aCobrar.name)
@@ -159,6 +180,11 @@ class DebtService {
   }
 
   Stream<List<Debt>> getPendingDebts() {
+    // Verificar si hay usuario autenticado antes de crear el stream
+    if (firebase_auth.FirebaseAuth.instance.currentUser == null) {
+      return Stream.value([]);
+    }
+
     return _debtsCollection
         .where('status', isEqualTo: DebtStatus.pending.name)
         .orderBy('date')
@@ -172,6 +198,11 @@ class DebtService {
   }
 
   Stream<List<Debt>> getPaidDebts() {
+    // Verificar si hay usuario autenticado antes de crear el stream
+    if (firebase_auth.FirebaseAuth.instance.currentUser == null) {
+      return Stream.value([]);
+    }
+
     return _debtsCollection
         .where('status', isEqualTo: DebtStatus.paid.name)
         .orderBy('updatedAt', descending: true)
@@ -185,6 +216,11 @@ class DebtService {
   }
 
   Stream<List<Debt>> getOverdueDebts() {
+    // Verificar si hay usuario autenticado antes de crear el stream
+    if (firebase_auth.FirebaseAuth.instance.currentUser == null) {
+      return Stream.value([]);
+    }
+
     return _debtsCollection
         .where('status', isEqualTo: DebtStatus.overdue.name)
         .orderBy('date')
@@ -198,6 +234,11 @@ class DebtService {
   }
 
   Stream<List<Debt>> getRecentDebts({int limit = 10}) {
+    // Verificar si hay usuario autenticado antes de crear el stream
+    if (firebase_auth.FirebaseAuth.instance.currentUser == null) {
+      return Stream.value([]);
+    }
+
     return _debtsCollection
         .orderBy('createdAt', descending: true)
         .limit(limit)
@@ -211,6 +252,11 @@ class DebtService {
   }
 
   Stream<List<Debt>> getDebtsByDateRange(DateTime start, DateTime end) {
+    // Verificar si hay usuario autenticado antes de crear el stream
+    if (firebase_auth.FirebaseAuth.instance.currentUser == null) {
+      return Stream.value([]);
+    }
+
     return _debtsCollection
         .where('date', isGreaterThanOrEqualTo: start.toIso8601String())
         .where('date', isLessThanOrEqualTo: end.toIso8601String())
@@ -405,6 +451,11 @@ class DebtService {
 
   // Real-time listeners
   Stream<List<Debt>> listenToProjectDebts(String projectId) {
+    // Verificar si hay usuario autenticado antes de crear el stream
+    if (firebase_auth.FirebaseAuth.instance.currentUser == null) {
+      return Stream.value([]);
+    }
+
     return _debtsCollection
         .where('projectId', isEqualTo: projectId)
         .orderBy('createdAt', descending: true)
@@ -418,6 +469,11 @@ class DebtService {
   }
 
   Stream<List<Debt>> listenToUserDebts(String userEmail) {
+    // Verificar si hay usuario autenticado antes de crear el stream
+    if (firebase_auth.FirebaseAuth.instance.currentUser == null) {
+      return Stream.value([]);
+    }
+
     return _debtsCollection
         .where('debtor', isEqualTo: userEmail)
         .orderBy('createdAt', descending: true)
@@ -432,6 +488,11 @@ class DebtService {
 
   // Métodos para obtener deudas según nuestra posición (deudor o acreedor)
   Stream<List<Debt>> getDebtsWhereWeAreDebtor(String userEmail) {
+    // Verificar si hay usuario autenticado antes de crear el stream
+    if (firebase_auth.FirebaseAuth.instance.currentUser == null) {
+      return Stream.value([]);
+    }
+
     return _debtsCollection
         .where('debtor', isEqualTo: userEmail)
         .orderBy('createdAt', descending: true)
@@ -445,6 +506,11 @@ class DebtService {
   }
 
   Stream<List<Debt>> getDebtsWhereWeAreCreditor(String userEmail) {
+    // Verificar si hay usuario autenticado antes de crear el stream
+    if (firebase_auth.FirebaseAuth.instance.currentUser == null) {
+      return Stream.value([]);
+    }
+
     return _debtsCollection
         .where('debtor', isEqualTo: userEmail)
         .where('debtType', isEqualTo: DebtType.aCobrar.name)
@@ -459,6 +525,11 @@ class DebtService {
   }
 
   Stream<List<Debt>> getPendingDebtsWhereWeAreDebtor(String userEmail) {
+    // Verificar si hay usuario autenticado antes de crear el stream
+    if (firebase_auth.FirebaseAuth.instance.currentUser == null) {
+      return Stream.value([]);
+    }
+
     return _debtsCollection
         .where('debtor', isEqualTo: userEmail)
         .where('status', isEqualTo: DebtStatus.pending.name)
@@ -473,6 +544,11 @@ class DebtService {
   }
 
   Stream<List<Debt>> getPendingDebtsWhereWeAreCreditor(String userEmail) {
+    // Verificar si hay usuario autenticado antes de crear el stream
+    if (firebase_auth.FirebaseAuth.instance.currentUser == null) {
+      return Stream.value([]);
+    }
+
     return _debtsCollection
         .where('debtor', isEqualTo: userEmail)
         .where('debtType', isEqualTo: DebtType.aCobrar.name)

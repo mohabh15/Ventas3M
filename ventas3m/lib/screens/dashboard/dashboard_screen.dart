@@ -303,7 +303,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         } catch (e) {
                           // Si hay error con el contexto, intentar con Navigator como fallback
                           if (mounted) {
-                            Navigator.of(context, rootNavigator: true).pushNamed('/calendar');
+                            context.push('/calendar');
                           }
                         }
                       })).toList(),

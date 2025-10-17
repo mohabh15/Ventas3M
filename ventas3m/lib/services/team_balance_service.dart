@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import '../models/team_member_balance.dart';
 
 class TeamBalanceService {
@@ -141,6 +142,11 @@ class TeamBalanceService {
 
   // Escuchar cambios en balances del equipo en tiempo real
   Stream<List<TeamMemberBalance>> listenToTeamBalances(String projectId) {
+    // Verificar si hay usuario autenticado antes de crear el stream
+    if (firebase_auth.FirebaseAuth.instance.currentUser == null) {
+      return Stream.value([]);
+    }
+
     return _balancesCollection
         .where('projectId', isEqualTo: projectId)
         .snapshots()

@@ -1,3 +1,4 @@
+import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/theme_provider.dart';
@@ -298,7 +299,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       onTap: () async {
         await authProvider.logout();
         if (context.mounted) {
-          Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+          context.go('/login');
         }
       },
     );

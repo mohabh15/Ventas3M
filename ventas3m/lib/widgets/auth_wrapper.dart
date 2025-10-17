@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import '../providers/auth_provider.dart';
 import '../widgets/navbar.dart';
 import '../screens/login/login_screen.dart';
@@ -10,21 +11,29 @@ class AuthWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context);
+    return StreamBuilder<firebase_auth.User?>(
+      stream: firebase_auth.FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        final authProvider = Provider.of<AuthProvider>(context);
 
-    // Mostrar loading mientras se verifica la autenticación
-    if (authProvider.isLoading) {
-      return const Scaffold(
-        body: LoadingWidget(),
-      );
-    }
+        // Mostrar loading mientras se verifica la autenticación o el stream está cargando
+        if (authProvider.isLoading || snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: LoadingWidget(),
+          );
+        }
 
-    // Mostrar login si no está autenticado
-    if (!authProvider.isAuthenticated) {
-      return const LoginScreen();
-    }
+        // Verificar estado de Firebase Auth desde el stream
+        final firebaseUser = snapshot.data;
 
-    // Mostrar la app principal si está autenticado
-    return const NavBar();
+        // Mostrar login si no está autenticado en Firebase
+        if (firebaseUser == null) {
+          return const LoginScreen();
+        }
+
+        // Mostrar la app principal si está autenticado
+        return const NavBar();
+      },
+    );
   }
 }

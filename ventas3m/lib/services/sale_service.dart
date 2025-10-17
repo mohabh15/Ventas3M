@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import '../models/sale.dart';
 import '../models/sale_status.dart';
 import '../models/payment_method.dart';
@@ -237,6 +238,11 @@ class SaleService {
 
   /// Escucha cambios en tiempo real de las ventas de un proyecto
   Stream<List<Sale>> listenToSales(String projectId) {
+    // Verificar si hay usuario autenticado antes de crear el stream
+    if (firebase_auth.FirebaseAuth.instance.currentUser == null) {
+      return Stream.value([]);
+    }
+
     return _firestore
         .collection('projects')
         .doc(projectId)

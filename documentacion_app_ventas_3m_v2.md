@@ -2102,6 +2102,176 @@ graph TB
 
 
 
+const functions = require('firebase-functions');
+const admin = require('firebase-admin');
+
+admin.initializeApp();
+
+const db = admin.firestore();
+
+// Función para enviar notificaciones
+exports.sendNotification = functions.https.onCall(async (data, context) => {
+  // Verificar autenticación
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Usuario no autenticado');
+  }
+
+  const { token, title, body, data: notificationData } = data;
+
+  if (!token || !title || !body) {
+    throw new functions.https.HttpsError('invalid-argument', 'Faltan parámetros requeridos');
+  }
+
+  const message = {
+    token: token,
+    notification: {
+      title: title,
+      body: body,
+    },
+    data: notificationData || {},
+  };
+
+  try {
+    const response = await admin.messaging().send(message);
+    console.log('Notificación enviada exitosamente:', response);
+    return { success: true, messageId: response };
+  } catch (error) {
+    console.error('Error al enviar notificación:', error);
+    throw new functions.https.HttpsError('internal', 'Error al enviar notificación');
+  }
+});
+
+// Función para enviar notificaciones a múltiples dispositivos
+exports.sendNotificationToMultiple = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Usuario no autenticado');
+  }
+
+  const { tokens, title, body, data: notificationData } = data;
+
+  if (!tokens || !Array.isArray(tokens) || tokens.length === 0 || !title || !body) {
+    throw new functions.https.HttpsError('invalid-argument', 'Parámetros inválidos');
+  }
+
+  const message = {
+    tokens: tokens,
+    notification: {
+      title: title,
+      body: body,
+    },
+    data: notificationData || {},
+  };
+
+  try {
+    const response = await admin.messaging().sendMulticast(message);
+    console.log('Notificaciones enviadas exitosamente:', response);
+    return { success: true, response: response };
+  } catch (error) {
+    console.error('Error al enviar notificaciones:', error);
+    throw new functions.https.HttpsError('internal', 'Error al enviar notificaciones');
+  }
+});
+
+// Función para enviar notificaciones cuando se añade una venta
+exports.notifySaleAdded = functions.firestore
+  .document('projects/{projectId}/sales/{saleId}')
+  .onCreate(async (snap, context) => {
+    console.log('Recepción del evento: Nueva venta detectada', { saleId: context.params.saleId, projectId: context.params.projectId });
+
+    const sale = snap.data();
+    console.log('Datos de la venta obtenidos:', { customerName: sale.customerName, totalAmount: sale.totalAmount });
+
+    try {
+      console.log('Consultando miembros del proyecto...');
+      const projectDoc = await db.collection('projects').doc(context.params.projectId).get();
+      if (!projectDoc.exists) {
+        console.error('Proyecto no encontrado:', context.params.projectId);
+        throw new Error('Proyecto no encontrado');
+      }
+
+      const project = projectDoc.data();
+      const members = project.members || [];
+      console.log('Miembros del proyecto obtenidos:', members.length, 'miembros');
+
+      if (members.length === 0) {
+        console.log('No hay miembros en el proyecto');
+        return;
+      }
+
+      console.log('Obteniendo tokens FCM de los miembros...');
+      const tokens = [];
+      for (const memberId of members) {
+        try {
+          const userDoc = await db.collection('users').doc(memberId).get();
+          if (userDoc.exists) {
+            const user = userDoc.data();
+            if (user.fcmToken) {
+              tokens.push(user.fcmToken);
+              console.log('Token FCM encontrado para usuario:', memberId);
+            } else {
+              console.log('Usuario sin token FCM:', memberId);
+            }
+          } else {
+            console.log('Usuario no encontrado:', memberId);
+          }
+        } catch (error) {
+          console.error('Error al obtener token para usuario:', memberId, error);
+        }
+      }
+
+      console.log('Tokens FCM obtenidos:', tokens.length);
+
+      if (tokens.length === 0) {
+        console.log('No hay tokens FCM disponibles');
+        return;
+      }
+
+      console.log('Enviando notificaciones...');
+      const message = {
+        tokens: tokens,
+        notification: {
+          title: 'Nueva Venta Registrada',
+          body: `Se ha registrado una venta de ${sale.customerName} por ${sale.totalAmount}€`,
+        },
+        data: {
+          type: 'sale_added',
+          saleId: context.params.saleId,
+          projectId: context.params.projectId,
+        },
+      };
+
+      const response = await admin.messaging().sendMulticast(message);
+      console.log('Notificaciones enviadas exitosamente:', { successCount: response.successCount, failureCount: response.failureCount });
+    } catch (error) {
+      console.error('Error en notifySaleAdded:', error);
+      throw error;
+    }
+  });
+
+
+  {
+  "name": "functions",
+  "description": "Cloud Functions for Firebase",
+  "scripts": {
+    "serve": "firebase emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "18"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "firebase-admin": "^12.7.0",
+    "firebase-functions": "^5.1.1"
+  },
+  "devDependencies": {
+    "firebase-functions-test": "^3.1.0"
+  },
+  "private": true
+}
 
 
 

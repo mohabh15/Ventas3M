@@ -1,7 +1,7 @@
+import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/widgets/app_button.dart';
-import '../../core/widgets/loading_widget.dart';
 import '../../providers/auth_provider.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -25,11 +25,11 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _navigateToRegister() {
-    Navigator.of(context).pushNamed('/register');
+    context.push('/register');
   }
 
   void _navigateToForgotPassword() {
-    Navigator.of(context).pushNamed('/forgot-password');
+    context.push('/forgot-password');
   }
 
   Future<void> _handleLogin() async {
@@ -42,12 +42,20 @@ class _LoginScreenState extends State<LoginScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(authProvider.errorMessage ?? 'Error al iniciar sesión')),
       );
+    } else if (success && mounted) {
+      // Navegar a la pantalla principal que incluye la navbar
+      context.go('/');
     }
   }
 
   Future<void> _handleGuestLogin() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     await authProvider.loginAsGuest();
+
+    if (mounted) {
+      // Navegar a la pantalla principal que incluye la navbar
+      context.go('/');
+    }
   }
 
   Future<void> _handleGoogleLogin() async {
@@ -58,6 +66,9 @@ class _LoginScreenState extends State<LoginScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(authProvider.errorMessage ?? 'Error al iniciar sesión con Google')),
       );
+    } else if (success && mounted) {
+      // Navegar a la pantalla principal que incluye la navbar
+      context.go('/');
     }
   }
 
@@ -66,7 +77,11 @@ class _LoginScreenState extends State<LoginScreen> {
     final theme = Theme.of(context);
     final size = MediaQuery.of(context).size;
 
-    return Scaffold(
+    return Consumer<AuthProvider>(
+      builder: (context, authProvider, child) {
+        return Stack(
+          children: [
+            Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -178,35 +193,21 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 24),
 
                 // Botón de iniciar sesión
-                Consumer<AuthProvider>(
-                  builder: (context, authProvider, child) {
-                    if (authProvider.isLoading) {
-                      return const LoadingWidget();
-                    }
-                    return AppButton(
-                      text: 'Iniciar Sesión',
-                      onPressed: _handleLogin,
-                      size: AppButtonSize.large,
-                    );
-                  },
+                AppButton(
+                  text: 'Iniciar Sesión',
+                  onPressed: _handleLogin,
+                  size: AppButtonSize.large,
                 ),
 
                 const SizedBox(height: 12),
 
                 // Botón de continuar con Google
-                Consumer<AuthProvider>(
-                  builder: (context, authProvider, child) {
-                    if (authProvider.isLoading) {
-                      return const LoadingWidget();
-                    }
-                    return AppButton(
-                      text: 'Continuar con Google',
-                      onPressed: _handleGoogleLogin,
-                      variant: AppButtonVariant.outline,
-                      size: AppButtonSize.large,
-                      leadingIcon: Icon(Icons.g_mobiledata), // Placeholder, usarías un icono de Google
-                    );
-                  },
+                AppButton(
+                  text: 'Continuar con Google',
+                  onPressed: _handleGoogleLogin,
+                  variant: AppButtonVariant.outline,
+                  size: AppButtonSize.large,
+                  leadingIcon: Icon(Icons.g_mobiledata), // Placeholder, usarías un icono de Google
                 ),
 
                 const SizedBox(height: 20),
@@ -231,18 +232,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 20),
 
                 // Botón de entrar como invitado
-                Consumer<AuthProvider>(
-                  builder: (context, authProvider, child) {
-                    if (authProvider.isLoading) {
-                      return const LoadingWidget();
-                    }
-                    return AppButton(
-                      text: 'Entrar como Invitado',
-                      onPressed: _handleGuestLogin,
-                      variant: AppButtonVariant.outline,
-                      size: AppButtonSize.large,
-                    );
-                  },
+                AppButton(
+                  text: 'Entrar como Invitado',
+                  onPressed: _handleGuestLogin,
+                  variant: AppButtonVariant.outline,
+                  size: AppButtonSize.large,
                 ),
 
                 const SizedBox(height: 12),
@@ -261,6 +255,28 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
       ),
+            ),
+            if (authProvider.isLoading)
+              Positioned(
+                bottom: 20,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        theme.colorScheme.primary,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import '../models/product.dart';
 
 class ProductService {
@@ -129,6 +130,11 @@ class ProductService {
 
   // Stream de productos en tiempo real
   Stream<List<Product>> getProductsStream(String projectId) {
+    // Verificar si hay usuario autenticado antes de crear el stream
+    if (firebase_auth.FirebaseAuth.instance.currentUser == null) {
+      return Stream.value([]);
+    }
+
     return _firestore
         .collection('products')
         .where('projectId', isEqualTo: projectId)

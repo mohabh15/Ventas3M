@@ -184,6 +184,7 @@ class SalesProvider extends ChangeNotifier {
     if (_currentProjectId == null) {
       return Stream.value([]);
     }
+    // Solo escuchar si hay un usuario autenticado
     return _saleService.listenToSales(_currentProjectId!);
   }
 

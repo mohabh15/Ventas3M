@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import '../models/event.dart';
 
 class EventService {
@@ -136,6 +137,11 @@ class EventService {
 
   /// Escucha cambios en tiempo real de los eventos de un usuario
   Stream<List<Event>> listenToEvents(String userId) {
+    // Verificar si hay usuario autenticado antes de crear el stream
+    if (firebase_auth.FirebaseAuth.instance.currentUser == null) {
+      return Stream.value([]);
+    }
+
     return _firestore
         .collection('users')
         .doc(userId)

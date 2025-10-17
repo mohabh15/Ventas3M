@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import '../core/theme/colors.dart';
 import '../providers/navigation_provider.dart';
 import '../screens/dashboard/dashboard_screen.dart';
@@ -28,6 +29,12 @@ class NavBarState extends State<NavBar> {
 
   @override
   Widget build(BuildContext context) {
+    // Verificar si hay usuario autenticado antes de mostrar la navbar
+    final firebaseUser = firebase_auth.FirebaseAuth.instance.currentUser;
+    if (firebaseUser == null) {
+      return const SizedBox.shrink(); // No mostrar nada si no hay usuario
+    }
+
     // Obtiene el padding de la zona segura inferior del dispositivo
     final bottomPadding = MediaQuery.of(context).padding.bottom;
     return Consumer<NavigationProvider>(

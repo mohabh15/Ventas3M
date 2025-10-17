@@ -1,3 +1,4 @@
+import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/products_provider.dart';
@@ -31,6 +32,23 @@ class _ProductsScreenState extends State<ProductsScreen> {
   @override
   void initState() {
     super.initState();
+    // Cargar productos y stock automáticamente al navegar a la pantalla
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _refreshData();
+    });
+  }
+
+  /// Método para recargar productos y stock
+  Future<void> _refreshData() async {
+    final productsProvider = Provider.of<ProductsProvider>(context, listen: false);
+    final stockProvider = Provider.of<ProductStockProvider>(context, listen: false);
+
+    try {
+      await productsProvider.loadProducts();
+      await stockProvider.loadStocks();
+    } catch (e) {
+      // Error ya se maneja en los providers
+    }
   }
 
   /// Método para obtener el stock del producto
@@ -135,7 +153,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                             ElevatedButton(
                               onPressed: () {
                                 if (error == 'No hay proyecto seleccionado') {
-                                  Navigator.pushNamed(context, AppRouter.settings);
+                                  context.push(AppRouter.settings);
                                 } else {
                                   productsProvider.loadProducts();
                                 }
@@ -178,19 +196,22 @@ class _ProductsScreenState extends State<ProductsScreen> {
                       );
                     }
 
-                    return ListView.builder(
-                       padding: const EdgeInsets.all(16),
-                       itemCount: products.length,
-                       itemBuilder: (context, index) {
-                         final product = products[index];
-                         return ProductCard(
-                           product: product,
-                           onTap: () {},
-                           onAddStock: () => _showAddStockModal(product.id, product.name),
-                           onEdit: () => _showEditProductModal(product),
-                         );
-                       },
-                     );
+                    return RefreshIndicator(
+                      onRefresh: _refreshData,
+                      child: ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: products.length,
+                        itemBuilder: (context, index) {
+                          final product = products[index];
+                          return ProductCard(
+                            product: product,
+                            onTap: () {},
+                            onAddStock: () => _showAddStockModal(product.id, product.name),
+                            onEdit: () => _showEditProductModal(product),
+                          );
+                        },
+                      ),
+                    );
                   },
                 ),
               ),
