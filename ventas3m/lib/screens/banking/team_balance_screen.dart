@@ -25,6 +25,7 @@ class _TeamBalanceScreenState extends State<TeamBalanceScreen> {
   Project? _currentProject;
   bool _isLoading = true;
   String? _errorMessage;
+  bool _isBalanceVisible = false;
   late SettingsProvider _settingsProvider;
   late AuthProvider _authProvider;
 
@@ -95,20 +96,32 @@ class _TeamBalanceScreenState extends State<TeamBalanceScreen> {
           .where('projectId', isEqualTo: projectId)
           .get();
 
-      final balances = snapshot.docs.map((doc) {
+      List<TeamMemberBalance> balances = snapshot.docs.map((doc) {
         final data = doc.data()..['id'] = doc.id;
         return TeamMemberBalance.fromJson(data);
       }).toList();
 
-      // Si no hay balances registrados, crear entradas iniciales para cada miembro
-      if (balances.isEmpty && _projectMembers.isNotEmpty) {
-        await _createInitialBalances();
-      } else {
-        setState(() {
-          _teamBalances = balances;
-          _isLoading = false;
-        });
+      // Asegurar que todos los miembros del proyecto tengan un balance, incluso con 0
+      final missingMembers = _projectMembers.where((email) =>
+          !balances.any((balance) => balance.userId == email)).toList();
+
+      if (missingMembers.isNotEmpty) {
+        await _createMissingBalances(missingMembers);
+        // Recargar balances después de crear los faltantes
+        final updatedSnapshot = await FirebaseFirestore.instance
+            .collection('team_balances')
+            .where('projectId', isEqualTo: projectId)
+            .get();
+        balances = updatedSnapshot.docs.map((doc) {
+          final data = doc.data()..['id'] = doc.id;
+          return TeamMemberBalance.fromJson(data);
+        }).toList();
       }
+
+      setState(() {
+        _teamBalances = balances;
+        _isLoading = false;
+      });
     } catch (e) {
       setState(() {
         _errorMessage = 'Error al cargar balances del equipo: $e';
@@ -117,7 +130,8 @@ class _TeamBalanceScreenState extends State<TeamBalanceScreen> {
     }
   }
 
-  Future<void> _createInitialBalances() async {
+
+  Future<void> _createMissingBalances(List<String> missingEmails) async {
     try {
       final currentUser = _authProvider.currentUser;
 
@@ -126,8 +140,8 @@ class _TeamBalanceScreenState extends State<TeamBalanceScreen> {
       final batch = FirebaseFirestore.instance.batch();
       final balancesRef = FirebaseFirestore.instance.collection('team_balances');
 
-      for (String email in _projectMembers) {
-        // Crear balance inicial para cada miembro
+      for (String email in missingEmails) {
+        // Crear balance inicial para cada miembro faltante
         final balanceData = TeamMemberBalance(
           id: '', // Se generará automáticamente
           userId: email,
@@ -144,12 +158,9 @@ class _TeamBalanceScreenState extends State<TeamBalanceScreen> {
       }
 
       await batch.commit();
-
-      // Recargar balances después de crearlos
-      await _loadTeamBalances();
     } catch (e) {
       setState(() {
-        _errorMessage = 'Error al crear balances iniciales: $e';
+        _errorMessage = 'Error al crear balances faltantes: $e';
         _isLoading = false;
       });
     }
@@ -264,46 +275,57 @@ class _TeamBalanceScreenState extends State<TeamBalanceScreen> {
 
   Widget _buildTeamBalanceList() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.only(bottom: 80),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Resumen total
-          _buildTotalBalanceCard(),
+          // Balance Total
+          _buildBalanceTotalCard(),
 
-          const SizedBox(height: 24),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 24),
 
-          // Lista de miembros
-          Text(
-            'Miembros del Equipo',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? Theme.of(context).textTheme.titleLarge?.color
-                  : Colors.black87,
+                // Lista de miembros
+                Text(
+                  'Miembros del Equipo',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Theme.of(context).textTheme.titleLarge?.color
+                        : Colors.black87,
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                ..._teamBalances.map((balance) => _buildMemberBalanceCard(balance)),
+              ],
             ),
           ),
-
-          const SizedBox(height: 16),
-
-          ..._teamBalances.map((balance) => _buildMemberBalanceCard(balance)),
         ],
       ),
     );
   }
 
-  Widget _buildTotalBalanceCard() {
-     final totalBalance = _teamBalances.fold<double>(0.0, (accumulator, balance) => accumulator + balance.balance.toDouble());
+  Widget _buildBalanceTotalCard() {
+    // Calcular ingresos totales desde ventas completadas
+    // Para esta pantalla, usamos el balance total del equipo
+    final totalBalance = _teamBalances.fold<double>(0.0, (accumulator, balance) => accumulator + balance.balance.toDouble());
 
     return Container(
+      margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            Color(0xFF0D47A1),
-            Color(0xFF1976D2),
-            Color(0xFF42A5F5),
+            Color(0xFF0D47A1), // Azul oscuro
+            Color(0xFF1976D2), // Azul primario
+            Color(0xFF42A5F5), // Azul claro
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -312,31 +334,71 @@ class _TeamBalanceScreenState extends State<TeamBalanceScreen> {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            'Balance Total del Equipo',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  'Balance Total del Equipo',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _isBalanceVisible = !_isBalanceVisible;
+                  });
+                },
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    _isBalanceVisible ? Icons.visibility : Icons.visibility_off,
+                    size: 14,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
-          Text(
-            '\$${totalBalance.toStringAsFixed(2)}',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+          FittedBox(
+            child: Text(
+              _isBalanceVisible ? '\$${totalBalance.toStringAsFixed(2)}' : '••••••',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
           ),
           const SizedBox(height: 6),
-          Text(
-            '${_teamBalances.length} miembros',
-            style: TextStyle(
-              fontSize: 13,
-              color: Colors.white.withValues(alpha: 0.8),
-            ),
+          Row(
+            children: [
+              Icon(
+                totalBalance >= 0 ? Icons.arrow_upward : Icons.arrow_downward,
+                size: 14,
+                color: totalBalance >= 0 ? Colors.greenAccent : Colors.redAccent,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                '${_teamBalances.length} miembros',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.white,
+                ),
+              ),
+            ],
           ),
         ],
       ),

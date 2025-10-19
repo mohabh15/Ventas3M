@@ -941,6 +941,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       }
     }
 
+    // Verificar que el widget esté montado antes de mostrar el modal
+    if (!mounted) return;
+
     final result = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
       isScrollControlled: true,

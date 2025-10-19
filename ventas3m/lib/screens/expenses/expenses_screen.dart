@@ -47,7 +47,6 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   }
 
   void _onSearchChanged() {
-    // TODO: Implementar búsqueda por texto cuando esté disponible en ExpenseProvider
     _applyFilters();
   }
 
@@ -76,6 +75,10 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     if (_dateRange != null) {
       filters['startDate'] = _dateRange!.start;
       filters['endDate'] = _dateRange!.end;
+    }
+
+    if (_searchController.text.isNotEmpty) {
+      filters['searchText'] = _searchController.text;
     }
 
     expenseProvider.setFilter(filters);
@@ -281,11 +284,17 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   }
 
   Widget _buildExpenseCard(Expense expense) {
-    return AppCard(
+    return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      onTap: () => _showExpenseDetails(expense),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Theme.of(context).dividerColor),
+      ),
+      child: InkWell(
+        onTap: () => _showExpenseDetails(expense),
+        borderRadius: BorderRadius.circular(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -786,11 +795,47 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     }
   }
 
-  void _duplicateExpense(Expense expense) {
-    // TODO: Implementar duplicación de gasto
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Duplicar: ${expense.description}')),
-    );
+  void _duplicateExpense(Expense expense) async {
+    try {
+      // Crear un nuevo gasto con los mismos datos
+      final newExpense = Expense.create(
+        description: expense.description,
+        amount: expense.amount,
+        date: expense.date,
+        category: expense.category,
+        projectId: expense.projectId,
+        providerId: expense.providerId,
+        paymentMethod: expense.paymentMethod,
+        isRecurring: expense.isRecurring,
+        recurrenceType: expense.recurrenceType,
+        notes: expense.notes,
+        receiptImageUrl: expense.receiptImageUrl,
+        createdBy: expense.createdBy,
+      );
+
+      // Crear el gasto en el provider
+      await context.read<ExpenseProvider>().createExpense(newExpense);
+
+      // Mostrar mensaje de éxito
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gasto duplicado exitosamente'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      // Mostrar mensaje de error
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al duplicar el gasto: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   void _deleteExpense(Expense expense) {

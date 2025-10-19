@@ -333,6 +333,8 @@ class _AddEventModalState extends State<AddEventModal> {
     final eventProvider = Provider.of<EventProvider>(context, listen: false);
     final success = await eventProvider.createEvent(event, userId);
 
+    if (!mounted) return;
+
     if (success) {
       Navigator.of(context).pop();
     } else {

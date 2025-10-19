@@ -39,7 +39,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
     await eventProvider.loadEvents(userId);
   }
 
-  Future<void> _showDeleteConfirmation(BuildContext context, Event event) async {
+  Future<void> _showDeleteConfirmation(Event event) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -58,11 +58,15 @@ class _CalendarScreenState extends State<CalendarScreen> {
       ),
     );
 
+    if (!mounted) return;
+
     if (confirmed == true) {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final userId = authProvider.currentUser?.id ?? 'guest';
       final eventProvider = Provider.of<EventProvider>(context, listen: false);
       final success = await eventProvider.deleteEvent(event.id, userId);
+
+      if (!mounted) return;
 
       if (!success) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -186,7 +190,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                         ),
                         IconButton(
                           icon: const Icon(Icons.delete),
-                          onPressed: () => _showDeleteConfirmation(context, event),
+                          onPressed: () => _showDeleteConfirmation(event),
                         ),
                       ],
                     ),

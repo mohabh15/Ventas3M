@@ -96,8 +96,8 @@ Future<void> main() async {
       return;
     }
     // Para otros errores, imprimir en consola
-    print('Error no manejado: $error');
-    print('Stack trace: $stackTrace');
+    //print('Error no manejado: $error');
+    //print('Stack trace: $stackTrace');
   });
 }
 

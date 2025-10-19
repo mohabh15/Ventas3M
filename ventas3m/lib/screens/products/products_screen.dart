@@ -337,6 +337,8 @@ class _ProductsScreenState extends State<ProductsScreen> {
       }
     }
 
+    if (!mounted) return;
+
     final result = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
       isScrollControlled: true,
@@ -390,6 +392,8 @@ class _ProductsScreenState extends State<ProductsScreen> {
                 // Forzar reconstrucción del estado para asegurar que la UI se actualice
                 setState(() {});
 
+                if (!mounted) return;
+
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('Stock añadido exitosamente'),
@@ -403,6 +407,9 @@ class _ProductsScreenState extends State<ProductsScreen> {
             // Si hay error, mostrar snackbar con el error del provider
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (mounted && stockProvider.error != null) {
+
+                if (!mounted) return;
+
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(stockProvider.error!),
@@ -1172,6 +1179,8 @@ class _ProductCardState extends State<ProductCard> {
       }
     }
 
+    if (!mounted) return;
+
     final result = await showModalBottomSheet<ProductStock>(
       context: context,
       isScrollControlled: true,
@@ -1199,6 +1208,8 @@ class _ProductCardState extends State<ProductCard> {
       try {
         await stockProvider.updateStock(result);
 
+        if (!mounted) return;
+
         // Mostrar mensaje de éxito
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1208,6 +1219,8 @@ class _ProductCardState extends State<ProductCard> {
           ),
         );
       } catch (e) {
+        if (!mounted) return;
+
         // Mostrar mensaje de error
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1227,6 +1240,8 @@ class _ProductCardState extends State<ProductCard> {
     try {
       await stockProvider.removeStock(stock.id);
 
+      if (!mounted) return;
+
       // Mostrar mensaje de éxito
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -1236,6 +1251,8 @@ class _ProductCardState extends State<ProductCard> {
         ),
       );
     } catch (e) {
+      if (!mounted) return;
+
       // Mostrar mensaje de error
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

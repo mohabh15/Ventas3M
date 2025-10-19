@@ -325,11 +325,17 @@ class _DebtManagementScreenState extends State<DebtManagementScreen> {
         break;
     }
 
-    return AppCard(
+    return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      onTap: () => _showDebtDetails(debt),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Theme.of(context).dividerColor),
+      ),
+      child: InkWell(
+        onTap: () => _showDebtDetails(debt),
+        borderRadius: BorderRadius.circular(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -425,20 +431,10 @@ class _DebtManagementScreenState extends State<DebtManagementScreen> {
               ),
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
-                physics: const BouncingScrollPhysics(),
+                physics: const NeverScrollableScrollPhysics(),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    _buildInfoChip(
-                      icon: Icons.person,
-                      text: 'Deudor: ${debt.debtor}',
-                    ),
-                    const SizedBox(width: 8),
-                    _buildInfoChip(
-                      icon: Icons.swap_horiz,
-                      text: 'Tipo: ${debt.debtType.displayName}',
-                    ),
-                    const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
@@ -454,6 +450,16 @@ class _DebtManagementScreenState extends State<DebtManagementScreen> {
                           color: statusColor,
                         ),
                       ),
+                    ),
+                    const SizedBox(width: 8),
+                    _buildInfoChip(
+                      icon: Icons.person,
+                      text: 'Deudor: ${debt.debtor}',
+                    ),
+                    const SizedBox(width: 8),
+                    _buildInfoChip(
+                      icon: Icons.swap_horiz,
+                      text: 'Tipo: ${debt.debtType.displayName}',
                     ),
                   ],
                 ),

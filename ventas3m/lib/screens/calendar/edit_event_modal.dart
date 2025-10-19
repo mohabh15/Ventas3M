@@ -343,6 +343,8 @@ class _EditEventModalState extends State<EditEventModal> {
     final eventProvider = Provider.of<EventProvider>(context, listen: false);
     final success = await eventProvider.updateEvent(updatedEvent, userId);
 
+    if (!mounted) return;
+
     if (success) {
       Navigator.of(context).pop();
     } else {

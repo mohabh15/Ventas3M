@@ -173,6 +173,11 @@ class ExpenseProvider extends ChangeNotifier {
           matches = matches && expense.date.isBefore(_filters['endDate'].add(const Duration(days: 1)));
         }
 
+        if (_filters.containsKey('searchText') && _filters['searchText'] != null && _filters['searchText'].isNotEmpty) {
+          final searchText = _filters['searchText'].toLowerCase();
+          matches = matches && expense.description.toLowerCase().contains(searchText);
+        }
+
         return matches;
       }).toList();
     }

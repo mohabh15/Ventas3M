@@ -27,6 +27,7 @@ class _BankingScreenState extends State<BankingScreen> {
    late AuthProvider _authProvider;
    late DebtService _debtService;
    late DebtProvider _debtProvider;
+  bool _isBalanceVisible = false;
 
   @override
   void didChangeDependencies() {
@@ -359,20 +360,31 @@ class _BankingScreenState extends State<BankingScreen> {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(10),
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _isBalanceVisible = !_isBalanceVisible;
+                  });
+                },
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    _isBalanceVisible ? Icons.visibility : Icons.visibility_off,
+                    size: 14,
+                    color: Colors.white,
+                  ),
                 ),
-                child: Icon(Icons.visibility_off, size: 14, color: Colors.white),
               ),
             ],
           ),
           const SizedBox(height: 12),
           FittedBox(
             child: Text(
-              '\$${balanceTotal.toStringAsFixed(2)}',
+              _isBalanceVisible ? '\$${balanceTotal.toStringAsFixed(2)}' : '••••••',
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
@@ -678,9 +690,6 @@ class _BankingScreenState extends State<BankingScreen> {
               scrollDirection: Axis.horizontal,
               physics: const BouncingScrollPhysics(),
               children: teamBalances.take(3).map((member) {
-                // Calcular cambio porcentual (simulado por ahora)
-                final change = '+3.5%'; // TODO: Calcular cambio real basado en datos históricos
-
                 // Asignar colores basados en el índice
                 final colors = [Colors.blue, Colors.green, Colors.purple, Colors.orange, Colors.teal];
                 final colorIndex = teamBalances.indexOf(member) % colors.length;
@@ -689,7 +698,6 @@ class _BankingScreenState extends State<BankingScreen> {
                   name: member.name,
                   role: member.role,
                   amount: '\$${member.balance.toStringAsFixed(0)}',
-                  change: change,
                   avatarColor: colors[colorIndex],
                 );
               }).toList(),
@@ -704,7 +712,6 @@ class _BankingScreenState extends State<BankingScreen> {
     required String name,
     required String role,
     required String amount,
-    required String change,
     required Color avatarColor,
   }) {
     return Container(
@@ -765,18 +772,6 @@ class _BankingScreenState extends State<BankingScreen> {
                       ? Theme.of(context).textTheme.titleLarge?.color
                       : Colors.black87,
                 ),
-              ),
-              Row(
-                children: [
-                  Icon(Icons.arrow_upward, size: 10, color: Colors.green),
-                  Text(
-                    change,
-                    style: TextStyle(
-                      fontSize: 9,
-                      color: Colors.green,
-                    ),
-                  ),
-                ],
               ),
             ],
           ),
