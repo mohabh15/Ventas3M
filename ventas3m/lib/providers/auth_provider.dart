@@ -2,9 +2,11 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user.dart';
 import '../services/auth_service.dart';
+import '../services/notification_service.dart';
 
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
+  final NotificationService _notificationService = NotificationService();
 
   // Estados
   User? _currentUser;
@@ -25,6 +27,7 @@ class AuthProvider extends ChangeNotifier {
 
   AuthProvider() {
     _initializeAuth();
+    _setupTokenRefreshListener();
   }
 
   // Inicializar autenticación al crear el provider
@@ -227,6 +230,16 @@ class AuthProvider extends ChangeNotifier {
   // Limpiar errores
   void clearError() {
     _clearError();
+  }
+
+  // Configurar listener para actualización de token FCM
+  void _setupTokenRefreshListener() {
+    // Escuchar cambios en el token FCM y actualizar en Firestore si hay usuario autenticado
+    _notificationService.firebaseMessaging.onTokenRefresh.listen((String token) {
+      if (_currentUser != null && _isAuthenticated) {
+        _authService.updateFCMTokenForCurrentUser(token);
+      }
+    });
   }
 
   // Método auxiliar para establecer usuario autenticado

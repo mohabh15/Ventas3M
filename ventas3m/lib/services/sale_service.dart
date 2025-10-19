@@ -3,9 +3,11 @@ import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import '../models/sale.dart';
 import '../models/sale_status.dart';
 import '../models/payment_method.dart';
+import 'firebase_functions_service.dart';
 
 class SaleService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseFunctionsService _functionsService = FirebaseFunctionsService();
   List<Sale> _sales = [];
 
   List<Sale> get sales => List.unmodifiable(_sales);
@@ -163,6 +165,20 @@ class SaleService {
           .collection('sales')
           .add(data);
 
+      // Notificar a través de Firebase Functions que se agregó una venta
+      try {
+        await _functionsService.notifySaleAdded(sale.projectId, {
+          'id': docRef.id,
+          'customerName': sale.customerName,
+          'totalAmount': sale.totalAmount,
+          'saleDate': sale.saleDate.toIso8601String(),
+          'status': sale.status.toString(),
+        });
+      } catch (functionsError) {
+        // Log error pero no fallar la operación principal
+        print('Error al notificar venta agregada: $functionsError');
+      }
+
       return docRef.id;
     } catch (e) {
       throw Exception('Error al crear venta en Firestore: $e');
@@ -268,6 +284,118 @@ class SaleService {
     _sales.add(createdSale);
 
     return createdSale;
+  }
+
+  /// Marca una venta como completada y envía notificaciones
+  Future<void> completeSale(String projectId, String saleId) async {
+    try {
+      // Obtener la venta actual
+      final sale = await getSaleFromFirestore(projectId, saleId);
+      if (sale == null) {
+        throw Exception('Venta no encontrada');
+      }
+
+      // Actualizar estado a completada
+      final completedSale = sale.copyWith(status: SaleStatus.completed);
+      await updateSaleInFirestore(completedSale);
+
+      // Actualizar lista local
+      updateSale(completedSale);
+
+      // Enviar notificación a través de Firebase Functions
+      try {
+        await _functionsService.notifySaleCompleted(projectId, saleId, {
+          'customerName': sale.customerName,
+          'totalAmount': sale.totalAmount,
+          'saleDate': sale.saleDate.toIso8601String(),
+        });
+      } catch (functionsError) {
+        print('Error al notificar venta completada: $functionsError');
+      }
+    } catch (e) {
+      throw Exception('Error al completar venta: $e');
+    }
+  }
+
+  /// Registra un pago recibido y envía notificaciones
+  Future<void> registerPayment(String projectId, String saleId, double amount, String paymentMethod) async {
+    try {
+      // Obtener la venta actual
+      final sale = await getSaleFromFirestore(projectId, saleId);
+      if (sale == null) {
+        throw Exception('Venta no encontrada');
+      }
+
+      // Actualizar deuda si existe
+      double remainingDebt = (sale.debt ?? 0.0) - amount;
+      if (remainingDebt < 0) remainingDebt = 0.0;
+
+      final updatedSale = sale.copyWith(debt: remainingDebt > 0 ? remainingDebt : null);
+      await updateSaleInFirestore(updatedSale);
+
+      // Actualizar lista local
+      updateSale(updatedSale);
+
+      // Enviar notificación a través de Firebase Functions
+      try {
+        await _functionsService.notifyPaymentReceived(
+          projectId,
+          saleId,
+          amount,
+          paymentMethod,
+        );
+      } catch (functionsError) {
+        print('Error al notificar pago recibido: $functionsError');
+      }
+    } catch (e) {
+      throw Exception('Error al registrar pago: $e');
+    }
+  }
+
+  /// Envía recordatorio de deuda para una venta específica
+  Future<void> sendDebtReminder(String projectId, String saleId) async {
+    try {
+      // Obtener la venta actual
+      final sale = await getSaleFromFirestore(projectId, saleId);
+      if (sale == null) {
+        throw Exception('Venta no encontrada');
+      }
+
+      if (sale.debt == null || sale.debt! <= 0) {
+        throw Exception('La venta no tiene deuda pendiente');
+      }
+
+      // Enviar recordatorio a través de Firebase Functions
+      await _functionsService.notifyDebtReminder(
+        projectId,
+        saleId,
+        sale.debt!,
+        sale.customerName,
+      );
+    } catch (e) {
+      throw Exception('Error al enviar recordatorio de deuda: $e');
+    }
+  }
+
+  /// Envía notificaciones personalizadas usando Firebase Functions
+  Future<void> sendCustomNotification(
+    String title,
+    String body, {
+    String? token,
+    List<String>? tokens,
+    Map<String, dynamic>? data,
+  }) async {
+    try {
+      if (token != null && token.isNotEmpty) {
+        await _functionsService.sendNotification(token, title, body, data: data);
+      } else if (tokens != null && tokens.isNotEmpty) {
+        await _functionsService.sendNotificationToMultiple(tokens, title, body, data: data);
+      } else {
+        throw Exception('Debe proporcionar al menos un token o una lista de tokens');
+      }
+    } catch (e) {
+      throw Exception('Error al enviar notificación personalizada: $e');
+    }
   }
 
   /// Obtiene estadísticas de ventas desde Firestore

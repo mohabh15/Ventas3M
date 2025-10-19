@@ -2,14 +2,28 @@ import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../models/user.dart';
+import 'notification_service.dart';
 
 class AuthService {
   final firebase_auth.FirebaseAuth _firebaseAuth = firebase_auth.FirebaseAuth.instance;
-  
+
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final NotificationService _notificationService = NotificationService();
 
   // Stream para escuchar cambios de autenticación
   Stream<firebase_auth.User?> get authStateChanges => _firebaseAuth.authStateChanges();
+
+  // Método para actualizar token FCM cuando el usuario está autenticado
+  Future<void> updateFCMTokenForCurrentUser(String token) async {
+    try {
+      final currentUser = _firebaseAuth.currentUser;
+      if (currentUser != null) {
+        await _notificationService.updateTokenForUser(currentUser.uid, token);
+      }
+    } catch (e) {
+      throw AuthException('Error al actualizar token FCM: ${e.toString()}');
+    }
+  }
 
   // Obtener usuario actual
   firebase_auth.User? get currentUser => _firebaseAuth.currentUser;
@@ -28,6 +42,14 @@ class AuthService {
 
       // Actualizar última fecha de login en Firestore
       await _updateLastLogin(userCredential.user!.uid);
+
+      // Inicializar notificaciones y guardar token FCM
+      try {
+        await _notificationService.initializeWithUser(userCredential.user!.uid);
+      } catch (e) {
+        // No fallar el login si hay error con notificaciones
+        print('Error al inicializar notificaciones: $e');
+      }
 
       return await _getUserFromFirebase(userCredential.user!);
     } on firebase_auth.FirebaseAuthException catch (e) {
@@ -52,6 +74,15 @@ class AuthService {
           );
         // Actualizar última fecha de login en Firestore
         await _updateLastLogin(userCredential.user!.uid);
+
+        // Inicializar notificaciones y guardar token FCM
+        try {
+          await _notificationService.initializeWithUser(userCredential.user!.uid);
+        } catch (e) {
+          // No fallar el login si hay error con notificaciones
+          print('Error al inicializar notificaciones: $e');
+        }
+
         return await _getUserFromFirebase(userCredential.user!);
       }
       else {
@@ -115,6 +146,15 @@ class AuthService {
       final firebaseUser = _firebaseAuth.currentUser;
       if (firebaseUser != null) {
         await _updateLastLogin(firebaseUser.uid);
+
+        // Inicializar notificaciones y guardar token FCM
+        try {
+          await _notificationService.initializeWithUser(firebaseUser.uid);
+        } catch (e) {
+          // No fallar la verificación si hay error con notificaciones
+          print('Error al inicializar notificaciones: $e');
+        }
+
         return await _getUserFromFirebase(firebaseUser);
       }
       return null;

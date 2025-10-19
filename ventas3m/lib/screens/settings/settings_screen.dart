@@ -1,14 +1,17 @@
 import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import '../../providers/theme_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../services/firebase_service.dart';
+import '../../services/notification_preferences_service.dart';
 import '../../models/project.dart';
 import '../profile/profile_screen.dart';
 import '../management/management_screen.dart';
 import '../../core/widgets/gradient_app_bar.dart';
+import '../../widgets/notification_permission_dialog.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -20,11 +23,48 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   List<Project> _projects = [];
   bool _isLoadingProjects = false;
+  bool _isLoadingNotificationSettings = false;
+  String _notificationPermissionStatus = 'notDetermined';
+  late NotificationPreferencesService _notificationPreferences;
 
   @override
   void initState() {
     super.initState();
+    _initializeServices();
+  }
+
+  Future<void> _initializeServices() async {
+    _notificationPreferences = await NotificationPreferencesService.create();
     _loadProjects();
+    _loadNotificationSettings();
+  }
+
+  Future<void> _loadNotificationSettings() async {
+    setState(() {
+      _isLoadingNotificationSettings = true;
+    });
+
+    try {
+      final settings = await _notificationPreferences.getSystemNotificationSettings();
+
+      setState(() {
+        if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+          _notificationPermissionStatus = 'granted';
+        } else if (settings.authorizationStatus == AuthorizationStatus.denied) {
+          _notificationPermissionStatus = 'denied';
+        } else {
+          _notificationPermissionStatus = 'notDetermined';
+        }
+      });
+    } catch (e) {
+      setState(() {
+        _notificationPermissionStatus = 'notDetermined';
+      });
+    } finally {
+      setState(() {
+        _isLoadingNotificationSettings = false;
+      });
+    }
   }
 
   Future<void> _loadProjects() async {
@@ -110,6 +150,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               const Divider(),
               _buildThemeToggleTile(context),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _buildGroupedCard(
+            context,
+            'Notificaciones',
+            [
+              _buildNotificationSettingsTile(context),
             ],
           ),
         ],
@@ -302,6 +350,113 @@ class _SettingsScreenState extends State<SettingsScreen> {
           context.go('/login');
         }
       },
+    );
+  }
+
+  Widget _buildNotificationSettingsTile(BuildContext context) {
+    return ListTile(
+      leading: Icon(
+        _getNotificationIcon(),
+        color: _getNotificationIconColor(context),
+        size: 24,
+      ),
+      title: Text(
+        'Notificaciones Push',
+        style: const TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      subtitle: _isLoadingNotificationSettings
+          ? const Text('Cargando...')
+          : Text(
+              _getNotificationStatusText(),
+              style: TextStyle(
+                fontSize: 14,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+      trailing: _isLoadingNotificationSettings
+          ? const SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : _buildNotificationActionButton(context),
+      onTap: () => _handleNotificationSettingsTap(context),
+    );
+  }
+
+  IconData _getNotificationIcon() {
+    switch (_notificationPermissionStatus) {
+      case 'granted':
+        return Icons.notifications_active;
+      case 'denied':
+        return Icons.notifications_off;
+      default:
+        return Icons.notifications;
+    }
+  }
+
+  Color _getNotificationIconColor(BuildContext context) {
+    switch (_notificationPermissionStatus) {
+      case 'granted':
+        return Theme.of(context).colorScheme.primary;
+      case 'denied':
+        return Theme.of(context).colorScheme.error;
+      default:
+        return Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6);
+    }
+  }
+
+  String _getNotificationStatusText() {
+    switch (_notificationPermissionStatus) {
+      case 'granted':
+        return 'Notificaciones habilitadas';
+      case 'denied':
+        return 'Notificaciones deshabilitadas';
+      default:
+        return 'Solicitar permisos';
+    }
+  }
+
+  Widget _buildNotificationActionButton(BuildContext context) {
+    if (_notificationPermissionStatus == 'denied') {
+      return TextButton(
+        onPressed: () => _openSystemSettings(),
+        child: const Text('Configurar'),
+      );
+    } else {
+      return const Icon(Icons.arrow_forward_ios);
+    }
+  }
+
+  void _handleNotificationSettingsTap(BuildContext context) {
+    if (_notificationPermissionStatus == 'denied') {
+      _openSystemSettings();
+    } else {
+      _showNotificationPermissionDialog();
+    }
+  }
+
+  void _showNotificationPermissionDialog() {
+    NotificationPermissionDialog.show(context).then((result) async {
+      // Recargar configuración después de mostrar el diálogo
+      await _loadNotificationSettings();
+
+      // Si se otorgaron permisos, habilitar notificaciones por defecto
+      if (result == true) {
+        await _notificationPreferences.setNotificationsEnabled(true);
+      }
+    });
+  }
+
+  void _openSystemSettings() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Ve a Configuración > Aplicación > Permisos de notificaciones para habilitar las notificaciones'),
+        duration: Duration(seconds: 4),
+      ),
     );
   }
 }

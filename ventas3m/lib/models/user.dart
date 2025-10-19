@@ -7,6 +7,7 @@ class User {
   final DateTime? createdAt;
   final DateTime? lastLoginAt;
   final bool isEmailVerified;
+  final String? fcmToken;
   final Map<String, dynamic>? metadata;
 
   User({
@@ -18,6 +19,7 @@ class User {
     this.createdAt,
     this.lastLoginAt,
     this.isEmailVerified = false,
+    this.fcmToken,
     this.metadata,
   });
 
@@ -31,6 +33,7 @@ class User {
       createdAt: json['createdAt']?.toDate(),
       lastLoginAt: json['lastLoginAt']?.toDate(),
       isEmailVerified: json['isEmailVerified'] ?? false,
+      fcmToken: json['fcmToken'],
       metadata: json['metadata'],
     );
   }
@@ -45,6 +48,7 @@ class User {
       'createdAt': createdAt,
       'lastLoginAt': lastLoginAt,
       'isEmailVerified': isEmailVerified,
+      'fcmToken': fcmToken,
       'metadata': metadata,
     };
   }
@@ -58,6 +62,7 @@ class User {
     DateTime? createdAt,
     DateTime? lastLoginAt,
     bool? isEmailVerified,
+    String? fcmToken,
     Map<String, dynamic>? metadata,
   }) {
     return User(
@@ -69,6 +74,7 @@ class User {
       createdAt: createdAt ?? this.createdAt,
       lastLoginAt: lastLoginAt ?? this.lastLoginAt,
       isEmailVerified: isEmailVerified ?? this.isEmailVerified,
+      fcmToken: fcmToken ?? this.fcmToken,
       metadata: metadata ?? this.metadata,
     );
   }

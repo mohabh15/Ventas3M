@@ -43,7 +43,7 @@ class EventProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final createdEvent = await _eventService.createEventWithLocalUpdate(event, userId);
+      await _eventService.createEventWithLocalUpdate(event, userId);
       _isLoading = false;
       notifyListeners();
       return true;

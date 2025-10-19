@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'dart:async';
@@ -28,6 +29,14 @@ Future<void> main() async {
     await initializeDateFormatting('es_ES', null);
 
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+    // Firebase Messaging se inicializa automáticamente con la importación
+    // Configurar permisos básicos para notificaciones
+    await FirebaseMessaging.instance.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
 
     // Configurar handler global de errores de Flutter
     FlutterError.onError = (FlutterErrorDetails details) {
@@ -95,9 +104,6 @@ Future<void> main() async {
       // Ignorar errores de permisos de Firestore silenciosamente
       return;
     }
-    // Para otros errores, imprimir en consola
-    print('Error no manejado: $error');
-    print('Stack trace: $stackTrace');
   });
 }
 
