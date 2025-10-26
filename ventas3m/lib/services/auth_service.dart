@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import '../models/user.dart';
 
 class AuthService {
@@ -39,27 +40,54 @@ class AuthService {
 
   // Método de login con Google
   Future<User> loginWithGoogle() async {
-    final googleSignIn = GoogleSignIn();
-    final googleUser = await googleSignIn.signIn();
-    if (googleUser != null) {
-      final googleAuth = await googleUser.authentication;
-      if (googleAuth.accessToken != null) {
+    if (kIsWeb) {
+      // Para web, usar signInSilently() que es el método recomendado
+      final googleSignIn = GoogleSignIn(
+        clientId: '800683276400-aavbsvhe8pumb8jms65ab5b2j2rn2j2n.apps.googleusercontent.com',
+      );
+      final googleUser = await googleSignIn.signInSilently();
+      if (googleUser != null) {
+        final googleAuth = await googleUser.authentication;
+        if (googleAuth.accessToken != null && googleAuth.idToken != null) {
           final userCredential = await _firebaseAuth.signInWithCredential(
             firebase_auth.GoogleAuthProvider.credential(
               accessToken: googleAuth.accessToken,
               idToken: googleAuth.idToken,
-            ),  
+            ),
           );
-        // Actualizar última fecha de login en Firestore
-        await _updateLastLogin(userCredential.user!.uid);
-        return await _getUserFromFirebase(userCredential.user!);
+          // Actualizar última fecha de login en Firestore
+          await _updateLastLogin(userCredential.user!.uid);
+          return await _getUserFromFirebase(userCredential.user!);
+        } else {
+          throw AuthException('Error al obtener tokens de Google');
+        }
+      } else {
+        throw AuthException('Inicio de sesión con Google cancelado');
       }
-      else {
-        throw AuthException('Error al obtener token de Google');
+    } else {
+      // Para móvil, mantener el flujo existente
+      final googleSignIn = GoogleSignIn(
+        clientId: '800683276400-aavbsvhe8pumb8jms65ab5b2j2rn2j2n.apps.googleusercontent.com',
+      );
+      final googleUser = await googleSignIn.signIn();
+      if (googleUser != null) {
+        final googleAuth = await googleUser.authentication;
+        if (googleAuth.accessToken != null) {
+          final userCredential = await _firebaseAuth.signInWithCredential(
+            firebase_auth.GoogleAuthProvider.credential(
+              accessToken: googleAuth.accessToken,
+              idToken: googleAuth.idToken,
+            ),
+          );
+          // Actualizar última fecha de login en Firestore
+          await _updateLastLogin(userCredential.user!.uid);
+          return await _getUserFromFirebase(userCredential.user!);
+        } else {
+          throw AuthException('Error al obtener token de Google');
+        }
+      } else {
+        throw AuthException('Inicio de sesión con Google cancelado');
       }
-    }
-    else {
-      throw AuthException('Inicio de sesión con Google cancelado');
     }
   }
 
